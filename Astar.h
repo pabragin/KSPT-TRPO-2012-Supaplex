@@ -20,11 +20,11 @@ public:
 	Cell * GetResultPath();
 	int GetPathLength();
 
-	void InitOpenList(void);	// Allocates memory for the open list.
-	void FreeOpenList(void);	// Frees memory used by the open list.
-	int FindPath(int, int, int, int);	// Finds a path using A*.
+	int FindPath(int startX, int startY, int targetX, int targetY, bool useHcost);	// Finds a path using A*.
 
 private:
+	void InitOpenList(void);	// Allocates memory for the open list.
+	void FreeOpenList(void);	// Frees memory used by the open list.
 	void DeleteTopItemFromBinaryHeap();
 	void AddItemToBinaryHeap();
 	int GetItemIndexFromBinaryHeapByCoord(int, int);

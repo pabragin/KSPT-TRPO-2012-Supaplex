@@ -9,11 +9,11 @@ Astar::Astar(void)
 	pathLength = 0;
 }
 
-Astar::Astar(char ** field, int mapW, int mapH)
+Astar::Astar(char ** field, int width, int height)
 {
 	map = field;
-	mapWidth = mapW;
-	mapHeight = mapH;
+	mapWidth = width;
+	mapHeight = height;
 	numberOfOpenListItems = 0;
 	pathLength = 0;
 }
@@ -21,11 +21,8 @@ Astar::Astar(char ** field, int mapW, int mapH)
 
 Astar::~Astar(void)
 {
-	if (openList != NULL) delete [] openList;
-	if (map != NULL)
-		for (int i = 0; i < mapWidth; i++)
-			delete [] map[i];
-	if (resultPath != NULL) delete [] resultPath;
+	map = NULL;
+	if (resultPath) delete [] resultPath;
 }
 
 Cell * Astar::GetResultPath()
@@ -54,14 +51,14 @@ void Astar::FreeOpenList()
 }
 
 // Finds a path using A*.
-int Astar::FindPath(int startX, int startY, int targetX, int targetY)
+int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHcost)
 {
 	int path = 0;
 	const int nonexistent = 0, found = 1;		// path-related constants
 	const int inOpenList = 1, inClosedList = 2;	// lists-related constants
 	int parentX, parentY, Gcost, index;
-	int ** whichList;
-	Cell ** parent;
+	int ** whichList;	// used to record whether a cell is on the open list or on the closed list.
+	Cell ** parent;		// used to record parent of each cage
 
 // 1. Checking start and target cells to avoid misunderstandings.
 
@@ -75,16 +72,16 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY)
 
 // 2. Allocate memory and reset variables
 
-	whichList = new int* [mapWidth + 1];
+	whichList = new int* [mapHeight + 1];
 	for (int i = 0; i < mapHeight; i++) {
-		whichList[i] = new int [mapHeight + 1];
-		for (int j = 0; j < mapHeight; j++)
+		whichList[i] = new int [mapWidth + 1];
+		for (int j = 0; j < mapWidth; j++)
 			whichList[i][j] = 0;
 	}
 
-	parent = new Cell* [mapWidth + 1];
+	parent = new Cell* [mapHeight + 1];
 	for (int i = 0; i < mapHeight; i++) {
-		parent[i] = new Cell [mapHeight + 1];
+		parent[i] = new Cell [mapWidth + 1];
 	}
 
 	InitOpenList();
@@ -99,7 +96,6 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY)
 
 // 4. Do it until the path is found or recognized as nonexistent.
 
-	char ctmp;
 	while (true) {
 	
 // 4.1. If the open list is not empty, take the first cell off of the list (i.e. the lowest F cost cell).
@@ -113,15 +109,16 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY)
 			whichList[parentX][parentY] = inClosedList;	// add item to the closed list
 			DeleteTopItemFromBinaryHeap();				// delete this item from the open list
 
-
-/*			cout << endl;
+/*
+			char ctmp;
+			cout << endl;
 			for (int i = 0; i < mapWidth; i++) {
 				for (int j = 0; j < mapHeight; j++)
 					cout << whichList[i][j]; //<< "/" << parent[i][j].GetX() << ":" << parent[i][j].GetY() << " ";
 				cout << endl;
 			}
 			cout << endl;
-			//cin >> ctmp;
+			cin >> ctmp;
 */
 
 // 4.2. Check the adjacent squares and add them to the open list
@@ -148,9 +145,10 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY)
 									openList[numberOfOpenListItems].SetGcost(Gcost + 1);
 									
 									// Figure out its H and F costs and parent
-									parent[x][y].SetX(parentX);			// change the cell's parent
+									parent[x][y].SetX(parentX);							// change the cell's parent
 									parent[x][y].SetY(parentY);
-									openList[numberOfOpenListItems].SetHcost( (abs(x - targetX) + abs(y - targetY)) );
+									// F cost includes H cost except when we want to use A* algorithm as Dijkstra's algorithm
+									if (useHcost) openList[numberOfOpenListItems].SetHcost( (abs(x - targetX) + abs(y - targetY)) );
 									openList[numberOfOpenListItems].CalculateFcost();	// update the F cost
 									
 									//Move the new open list item to the proper place in the binary heap.
@@ -230,20 +228,20 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY)
 		}
 	}
 
-// 7. Free used memory
+// 7. Freeing used memory
 
-/*	FreeOpenList();
-	delete [] whichList;
-	for (int i = 0; i < mapWidth; i++)
+	FreeOpenList();
+	for (int i = 0; i < mapHeight; i++)
+		delete [] whichList[i];
+	for (int i = 0; i < mapHeight; i++)
 		delete [] parent[i];
-*/
 
-	for (int i = 0; i < mapWidth; i++) {
-		for (int j = 0; j < mapHeight; j++)
+
+	for (int i = 0; i < mapHeight; i++) {
+		for (int j = 0; j < mapWidth; j++)
 			cout << whichList[i][j];
 		cout << endl;
 	}
-
 
 	return path;
 }

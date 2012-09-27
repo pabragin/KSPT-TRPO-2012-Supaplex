@@ -7,7 +7,6 @@ class OpenListItem :
 	int Fcost;
 	int Gcost;
 	int Hcost;
-	//int whichList; // used to record whether a cell is on the open list or on the closed list.
 public:
 	OpenListItem(void);
 	OpenListItem(int, int);
@@ -16,12 +15,10 @@ public:
 
 	void SetGcost(int);
 	void SetHcost(int);
-	//void SetWhichList(int);
 
 	int GetFcost();
 	int GetGcost();
 	int GetHcost();
-	//int GetWhichList();
 
 	void SetCosts(int, int);
 	void CalculateFcost();
