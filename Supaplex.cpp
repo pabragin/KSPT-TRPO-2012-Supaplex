@@ -3,7 +3,7 @@
 
 #include "Game.h"
 
-char * filename = "input13.txt";
+char * filename = "..//IO files//input15.txt";
 
 int main(int argc, char* argv[])
 {

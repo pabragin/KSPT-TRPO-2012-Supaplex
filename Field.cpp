@@ -36,20 +36,21 @@ int Field::LoadMap(char * file)
 		for (int j = 0; j < mapWidth; j++) {
 			map[i][j] = str[j];
 			if (map[i][j] == 'R') {				// remembering robot coordinates
-				robot.SetX(i);
-				robot.SetY(j);
+				robot.first = i;
+				robot.second = j;
 			} else if (map[i][j] == '\\')
-				lambdas.push_back(Cell(i, j));	// filling lambdas's list
+				lambdas.push_back(pair<int, int>(i, j));	// filling lambdas's list
 			else if (map[i][j] == 'L') {		// remembering closed lift coordinates
-				lift.SetX(i);
-				lift.SetY(j);
+				lift.first = i;
+				lift.second = j;
 			} else if (map[i][j] == 'O') {		// remembering open lift coordinates
-				lift.SetX(i);
-				lift.SetY(j);
+				lift.first = i;
+				lift.second = j;
 				liftIsOpen = true;
 			}
 		}
 	}
+
 	return 0;
 }
 
@@ -70,19 +71,19 @@ char ** Field::GetMap()
 }
 
 // Desc: returns robot coordinates
-Cell Field::GetRobot()
+pair<int, int> Field::GetRobot()
 {
 	return this->robot;
 }
 
 // Desc: returns list of lambda's coordinates for all lambdas on map
-list<Cell> Field::GetLambdas()
+vector<pair<int, int>> Field::GetLambdas()
 {
 	return this->lambdas;
 }
 
 // Desc: returns lift coordinates
-Cell Field::GetLift()
+pair<int, int> Field::GetLift()
 {
 	return this->lift;
 }
@@ -143,7 +144,7 @@ void Field::UpdateMap()
 	// (x; y) is updated to Open Lambda Lift.
 	if (lambdas.empty()) {
 		liftIsOpen = true;
-		newState[lift.GetX()][lift.GetY()] = 'O';
+		newState[lift.first][lift.second] = 'O';
 	}
 
 	// Rewriting old map according to the new state
@@ -166,9 +167,9 @@ bool Field::isWalkable(int x, int y)
 	// On the other side, robot can't go on right or left cage concerning him
 	// if there is a stone in this cage and there is something in next cage
 	if (map[x][y] == '*') {											// If there is a stone in this cage:
-		if (x - 1 == robot.GetX() && y == robot.GetY()) {			// then, if robot is to the left of a cage
+		if (x - 1 == robot.first && y == robot.second) {			// then, if robot is to the left of a cage
 			if (map[x + 1][y] != ' ') return false;					// then robot fails if the right cage near stone isn't empty
-		} else if (x + 1 == robot.GetX() && y == robot.GetY()) {	// otherwise, if robot is to the right of a cage
+		} else if (x + 1 == robot.first && y == robot.second) {	// otherwise, if robot is to the right of a cage
 			if (map[x - 1][y] != ' ') return false;					// then robot fails if the left cage near stone isn't empty.
 		} else return true;											// Robot succeeds in all other cases (i.e. next cage is empty).
 	}

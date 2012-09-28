@@ -7,9 +7,9 @@ class Field
 	int mapWidth;
 	int mapHeight;
 	char ** map;
-	Cell robot;
-	list<Cell> lambdas;
-	Cell lift;
+	pair<int, int> robot;
+	vector<pair<int, int>> lambdas;
+	pair<int, int> lift;
 	bool liftIsOpen;
 public:
 	Field(void);
@@ -19,9 +19,9 @@ public:
 	int GetWidth();
 	int GetHeight();
 	char ** GetMap();				// returns pointer to map
-	Cell GetRobot();				// returns robot coordinates
-	list<Cell> GetLambdas();		// returns list of lambda's coordinates for all lambdas on map
-	Cell GetLift();					// returns lift coordinates
+	pair<int, int> GetRobot();				// returns robot coordinates
+	vector<pair<int, int>> GetLambdas();		// returns list of lambda's coordinates for all lambdas on map
+	pair<int, int> GetLift();					// returns lift coordinates
 	bool isLiftOpened();			// returns the state of the lift
 
 	void UpdateMap();				// updates map according to the rules

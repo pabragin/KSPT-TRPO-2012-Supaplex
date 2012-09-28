@@ -19,8 +19,6 @@ int Game::Start(char * file)
 		return -1;
 	}
 
-	robot.init(&map.GetRobot(), &map.GetLambdas());
-
 //	map.printMap(cout);
 
 	return 0;
@@ -28,9 +26,25 @@ int Game::Start(char * file)
 
 void Game::Solve()
 {
-	if (!map.GetMap()) return;
-	while (true) {
-		robot.Move(map.GetMap());
-		map.UpdateMap();
+	TSPSolver solver(this->map);
+	solver.Solve();
+	int tourSize = solver.GetTour().size();
+
+	for (int i = 0; i < tourSize; i++) {
+		cout << solver.GetTour()[i] << " ";
 	}
+	cout << endl << endl;
+
+	vector<pair<int, int>> tour = solver.GetNodes();
+	for (int i = 0; i < tourSize; i++) {
+		cout << tour[solver.GetTour()[i]].first << ":" << tour[solver.GetTour()[i]].second << endl;
+	}
+	cout << endl;
+
+
+	//if (!map.GetMap()) return;
+	//while (true) {
+	//	robot.Move(map.GetMap());
+	//	map.UpdateMap();
+	//}
 }

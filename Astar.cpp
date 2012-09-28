@@ -25,7 +25,7 @@ Astar::~Astar(void)
 	if (resultPath) delete [] resultPath;
 }
 
-Cell * Astar::GetResultPath()
+pair<int, int> * Astar::GetResultPath()
 {
 	return this->resultPath;
 }
@@ -58,13 +58,13 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 	const int inOpenList = 1, inClosedList = 2;	// lists-related constants
 	int parentX, parentY, Gcost, index;
 	int ** whichList;	// used to record whether a cell is on the open list or on the closed list.
-	Cell ** parent;		// used to record parent of each cage
+	pair<int, int> ** parent;		// used to record parent of each cage
 
 // 1. Checking start and target cells to avoid misunderstandings.
 
 	// If start and target cells are the same cell
 	if (startX == targetX && startY == targetY)
-		return 0;
+		return found;
 
 	// If target cell is unwalkable
 	if (map[targetX][targetY] == '#')
@@ -79,9 +79,9 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 			whichList[i][j] = 0;
 	}
 
-	parent = new Cell* [mapHeight + 1];
+	parent = new pair<int, int>* [mapHeight + 1];
 	for (int i = 0; i < mapHeight; i++) {
-		parent[i] = new Cell [mapWidth + 1];
+		parent[i] = new pair<int, int> [mapWidth + 1];
 	}
 
 	InitOpenList();
@@ -89,7 +89,7 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 
 // 3. Add the starting cell to the open list.
 
-	numberOfOpenListItems++;
+	numberOfOpenListItems = 1;
 	openList[1].SetX(startX);	// assign it as the top item in the binary heap
 	openList[1].SetY(startY);
 	openList[1].SetGcost(0);	// reset starting cell's G value to 0
@@ -108,18 +108,6 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 
 			whichList[parentX][parentY] = inClosedList;	// add item to the closed list
 			DeleteTopItemFromBinaryHeap();				// delete this item from the open list
-
-/*
-			char ctmp;
-			cout << endl;
-			for (int i = 0; i < mapWidth; i++) {
-				for (int j = 0; j < mapHeight; j++)
-					cout << whichList[i][j]; //<< "/" << parent[i][j].GetX() << ":" << parent[i][j].GetY() << " ";
-				cout << endl;
-			}
-			cout << endl;
-			cin >> ctmp;
-*/
 
 // 4.2. Check the adjacent squares and add them to the open list
 
@@ -145,8 +133,8 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 									openList[numberOfOpenListItems].SetGcost(Gcost + 1);
 									
 									// Figure out its H and F costs and parent
-									parent[x][y].SetX(parentX);							// change the cell's parent
-									parent[x][y].SetY(parentY);
+									parent[x][y].first = parentX;							// change the cell's parent
+									parent[x][y].second = parentY;
 									// F cost includes H cost except when we want to use A* algorithm as Dijkstra's algorithm
 									if (useHcost) openList[numberOfOpenListItems].SetHcost( (abs(x - targetX) + abs(y - targetY)) );
 									openList[numberOfOpenListItems].CalculateFcost();	// update the F cost
@@ -163,8 +151,8 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 
 									// If this path is shorter (G cost is lower) then change the parent cell, G cost and F cost. 		
 									if (Gcost < openList[index].GetGcost()) {
-										parent[x][y].SetX(parentX);			// change the cell's parent
-										parent[x][y].SetY(parentY);
+										parent[x][y].first = parentX;			// change the cell's parent
+										parent[x][y].second = parentY;
 										openList[index].SetGcost(Gcost);	// change the G cost
 										openList[index].CalculateFcost();	// update the F cost
 										BubbleItemInBinaryHeap(index);		// update cell's position on the open list
@@ -201,29 +189,27 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 		int tmp;
 		do {
 			// Look up the parent of the current cell.
-			tmp = parent[x][y].GetX();
-			y = parent[x][y].GetY();
+			tmp = parent[x][y].first;
+			y = parent[x][y].second;
 			x = tmp;
 
 			// Figure out the path length
 			pathLength++;
 		} while (x != startX || y != startY);
 
-		resultPath = new Cell [pathLength + 1];
+		resultPath = new pair<int, int> [pathLength + 1];
 
 // 6.2. Save path info in reverse order
 
 		x = targetX;
 		y = targetY;
 		for (int i = pathLength; i >= 0; i--) {
-			resultPath[i].SetX(x);
-			resultPath[i].SetY(y);
-
-			cout << x << ":" << y << endl;
+			resultPath[i].first = x;
+			resultPath[i].second = y;
 
 			// Look up the parent of the current cell.	
-			tmp = parent[x][y].GetX();
-			y = parent[x][y].GetY();
+			tmp = parent[x][y].first;
+			y = parent[x][y].second;
 			x = tmp;
 		}
 	}
@@ -235,13 +221,6 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 		delete [] whichList[i];
 	for (int i = 0; i < mapHeight; i++)
 		delete [] parent[i];
-
-
-	for (int i = 0; i < mapHeight; i++) {
-		for (int j = 0; j < mapWidth; j++)
-			cout << whichList[i][j];
-		cout << endl;
-	}
 
 	return path;
 }

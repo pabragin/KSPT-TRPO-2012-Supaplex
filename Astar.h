@@ -8,8 +8,8 @@ class Astar
 	int mapWidth;
 	int mapHeight;
 	int numberOfOpenListItems;
-	OpenListItem * openList; // array holding open list items, which is maintained as a binary heap.
-	Cell * resultPath;
+	OpenListItem * openList;	// array holding open list items, which is maintained as a binary heap.
+	pair<int, int> * resultPath;
 	int pathLength;
 
 public:
@@ -17,7 +17,7 @@ public:
 	Astar(char **, int m, int n);
 	~Astar(void);
 
-	Cell * GetResultPath();
+	pair<int, int> * GetResultPath();
 	int GetPathLength();
 
 	int FindPath(int startX, int startY, int targetX, int targetY, bool useHcost);	// Finds a path using A*.

@@ -24,6 +24,16 @@ OpenListItem::~OpenListItem(void)
 {
 }
 
+void OpenListItem::SetX(int xCoord)
+{
+	if (xCoord >= 0) this->x = xCoord;
+}
+
+void OpenListItem::SetY(int yCoord)
+{
+	if (yCoord >= 0) this->y = yCoord;
+}
+
 void OpenListItem::SetGcost(int aGcost)
 {
 	this->Gcost = aGcost;
@@ -32,6 +42,16 @@ void OpenListItem::SetGcost(int aGcost)
 void OpenListItem::SetHcost(int aHcost)
 {
 	this->Hcost = aHcost;
+}
+
+int OpenListItem::GetX()
+{
+	return x;
+}
+
+int OpenListItem::GetY()
+{
+	return y;
 }
 
 int OpenListItem::GetFcost()

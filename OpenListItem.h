@@ -1,9 +1,9 @@
 #pragma once
-#include "Cell.h"
 
-class OpenListItem :
-	public Cell
+class OpenListItem
 {
+	int x;
+	int y;
 	int Fcost;
 	int Gcost;
 	int Hcost;
@@ -13,9 +13,13 @@ public:
 	OpenListItem(int, int, int, int);
 	~OpenListItem(void);
 
+	void SetX(int);
+	void SetY(int);
 	void SetGcost(int);
 	void SetHcost(int);
 
+	int GetX();
+	int GetY();
 	int GetFcost();
 	int GetGcost();
 	int GetHcost();

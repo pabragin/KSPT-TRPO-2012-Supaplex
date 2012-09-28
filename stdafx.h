@@ -8,7 +8,7 @@
 #include "OpenListItem.h"
 #include <iostream>
 #include <fstream>
-#include <list>
+#include <vector>
 #include <string>
 
 using namespace std;
