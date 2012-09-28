@@ -6,7 +6,6 @@ Astar::Astar(void)
 	mapWidth = -1;
 	mapHeight = -1;
 	numberOfOpenListItems = 0;
-	pathLength = 0;
 }
 
 Astar::Astar(char ** field, int width, int height)
@@ -15,24 +14,23 @@ Astar::Astar(char ** field, int width, int height)
 	mapWidth = width;
 	mapHeight = height;
 	numberOfOpenListItems = 0;
-	pathLength = 0;
 }
 
 
 Astar::~Astar(void)
 {
 	map = NULL;
-	if (resultPath) delete [] resultPath;
+	resultPath.clear();
 }
 
-pair<int, int> * Astar::GetResultPath()
+vector<pair<int, int>> Astar::GetResultPath()
 {
 	return this->resultPath;
 }
 
 int Astar::GetPathLength()
 {
-	return this->pathLength;
+	return this->resultPath.size();
 }
 
 // Desc: Allocates memory for the open list.
@@ -85,7 +83,7 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 	}
 
 	InitOpenList();
-	pathLength = 0;
+	resultPath.clear();
 
 // 3. Add the starting cell to the open list.
 
@@ -122,7 +120,7 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 						// If not already on the closed list (items on the closed list have already been considered and can now be ignored).
 						if (whichList[x][y] != inClosedList) {
 							// If not a wall/obstacle square.
-							if (map[x][y] != '#') {
+							if (map[x][y] != '#' && map[x][y] != '*') {																				// TBD: use isWalkable(...) method from Field class
 								// If cell is not already on the open list, add it to the open list.
 								if (whichList[x][y] != inOpenList) {
 									numberOfOpenListItems++;					// increment number of items in the heap
@@ -183,35 +181,33 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 
 	if (path == found) {
 
-// 6.1. Working backwards from the target to the starting location by checking each cell's parent.
+// 6.1. Working backwards from the target to the start by checking each cell's parent.
 
 		int x = targetX, y = targetY;
 		int tmp;
-		do {
-			// Look up the parent of the current cell.
+		while (true) {
+			// Save path in reverse order
+			resultPath.push_back(pair<int, int> (x, y));
+
+			if (x == startX && y == startY) break;
+
+			// Look up the parent of the current cell
 			tmp = parent[x][y].first;
 			y = parent[x][y].second;
 			x = tmp;
+		} 
 
-			// Figure out the path length
-			pathLength++;
-		} while (x != startX || y != startY);
+// 6.2. Reversing path
 
-		resultPath = new pair<int, int> [pathLength + 1];
-
-// 6.2. Save path info in reverse order
-
-		x = targetX;
-		y = targetY;
-		for (int i = pathLength; i >= 0; i--) {
-			resultPath[i].first = x;
-			resultPath[i].second = y;
-
-			// Look up the parent of the current cell.	
-			tmp = parent[x][y].first;
-			y = parent[x][y].second;
-			x = tmp;
+		int size = (int) resultPath.size();
+		int amount = size/2;
+		pair<int, int> tmppair;
+		for (int i = 0; i < amount; i++) {
+			tmppair = resultPath[size - i - 1];
+			resultPath[size - i - 1] = resultPath[i];
+			resultPath[i] = tmppair;
 		}
+		
 	}
 
 // 7. Freeing used memory
