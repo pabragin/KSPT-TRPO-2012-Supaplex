@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 
-class Field																								// TBD: loading non-rectangular maps
+class Field
 {
 	int mapWidth;
 	int mapHeight;

@@ -22,19 +22,33 @@ int Field::LoadMap(char * file)
 	ifstream fin(file);
 	if (!fin.is_open()) return -2;
 
+	vector<string> buf;
 	string str;
-	getline(fin, str);
-	mapWidth = str.size();
-	fin.seekg(0, ios::end);
-	mapHeight = ((int) fin.tellg() + 2)/(mapWidth + 2);
+	int width = 0;
+
+	// Counting mine's dimension
+	while (!fin.eof()) {
+		getline(fin, str);
+		buf.push_back(str);
+		if (str.size() > width) width = str.size(); // remember the longest row
+	}
+
+	mapWidth = width;
+	mapHeight = buf.size();
 	fin.seekg(0, ios::beg);
 
 	map = new char* [mapHeight];
 	for (int i = 0; i < mapHeight; i++) {
 		map[i] = new char [mapWidth];
-		getline(fin, str);
 		for (int j = 0; j < mapWidth; j++) {
-			map[i][j] = str[j];
+
+			// All rows shorter than map width are supplemented with whitespaces
+			if (j >= buf.at(i).size()) {
+				map[i][j] = ' ';
+				continue;
+			}
+			map[i][j] = buf.at(i)[j];
+
 			if (map[i][j] == 'R') {				// remembering robot coordinates
 				robot.first = i;
 				robot.second = j;
