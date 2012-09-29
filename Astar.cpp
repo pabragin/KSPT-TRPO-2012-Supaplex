@@ -23,23 +23,25 @@ Astar::~Astar(void)
 	resultPath.clear();
 }
 
+// Description: Returns the shortest path found
 vector<pair<int, int>> Astar::GetResultPath()
 {
 	return this->resultPath;
 }
 
+// Description: Returns length of the result path
 int Astar::GetPathLength()
 {
 	return this->resultPath.size();
 }
 
-// Desc: Allocates memory for the open list.
+// Description: Allocates memory for the open list.
 void Astar::InitOpenList()
 {
 	openList = new OpenListItem [mapWidth*mapHeight+2];
 }
 
-// Desc: Frees memory used by the open list.
+// Description: Frees memory used by the open list.
 void Astar::FreeOpenList()
 {
 	if (openList) {
@@ -48,7 +50,7 @@ void Astar::FreeOpenList()
 	}
 }
 
-// Finds a path using A*.
+// Description: Finds a path using A*.
 int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHcost)
 {
 	int path = 0;
@@ -260,7 +262,7 @@ void Astar::AddItemToBinaryHeap()
 }
 
 // Description: Finds the item in the binary heap by cell's coordinates and returns its index.
-int Astar::GetItemIndexFromBinaryHeapByCoord(int x, int y)
+int Astar::GetItemIndexFromBinaryHeapByCoord(const int & x, const int & y)
 {
 	int index = -1;
 	for (int i = 1; i <= numberOfOpenListItems; i++) {
@@ -272,6 +274,7 @@ int Astar::GetItemIndexFromBinaryHeapByCoord(int x, int y)
 	return index;
 }
 
+// Description: Sets target item in properly position in binary heap
 void Astar::BubbleItemInBinaryHeap(int index)
 {
 	while (index != 1) {	// While item hasn't bubbled to the top

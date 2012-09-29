@@ -15,7 +15,7 @@ Field::~Field(void)
 			delete [] map[i];
 }
 
-// Desc: loads map from file and fills Field's fields =)
+// Description: Loads map from file and fills Field's fields =)
 int Field::LoadMap(char * file)
 {
 	if (file == NULL) return -1;
@@ -54,47 +54,49 @@ int Field::LoadMap(char * file)
 	return 0;
 }
 
+// Description: Returns map width
 int Field::GetWidth()
 {
 	return this->mapWidth;
 }
 
+// Description: Returns map height
 int Field::GetHeight()
 {
 	return this->mapHeight;
 }
 
-// Desc: returns pointer to map
+// Description: Returns map
 char ** Field::GetMap()
 {
 	return this->map;
 }
 
-// Desc: returns robot coordinates
+// Description: Returns robot coordinates
 pair<int, int> Field::GetRobot()
 {
 	return this->robot;
 }
 
-// Desc: returns list of lambda's coordinates for all lambdas on map
+// Description: Returns list of lambda's coordinates for all lambdas on map
 vector<pair<int, int>> Field::GetLambdas()
 {
 	return this->lambdas;
 }
 
-// Desc: returns lift coordinates
+// Description: Returns lift coordinates
 pair<int, int> Field::GetLift()
 {
 	return this->lift;
 }
 
-// Desc: returns the state of the lift
+// Description: Returns the state of the lift
 bool Field::isLiftOpened()
 {
 	return this->liftIsOpen;
 }
 
-// Desc: updates map according to the rules
+// Description: Updates map according to the rules
 void Field::UpdateMap()
 {
 	// Creating new state to record changes on the map
@@ -159,8 +161,8 @@ void Field::UpdateMap()
 		delete [] newState[i];
 }
 
-// Desc: checks, whether robot can go on this cage or not
-bool Field::isWalkable(int x, int y)
+// Description: Checks, whether robot can go on this cage or not
+bool Field::isWalkable(int x, int y)																						// TBD: add some euristic
 {
 	// If there is a wall, then robot fails
 	if (map[x][y] == '#') return false;
@@ -169,7 +171,7 @@ bool Field::isWalkable(int x, int y)
 	if (map[x][y] == '*') {											// If there is a stone in this cage:
 		if (x - 1 == robot.first && y == robot.second) {			// then, if robot is to the left of a cage
 			if (map[x + 1][y] != ' ') return false;					// then robot fails if the right cage near stone isn't empty
-		} else if (x + 1 == robot.first && y == robot.second) {	// otherwise, if robot is to the right of a cage
+		} else if (x + 1 == robot.first && y == robot.second) {		// otherwise, if robot is to the right of a cage
 			if (map[x - 1][y] != ' ') return false;					// then robot fails if the left cage near stone isn't empty.
 		} else return true;											// Robot succeeds in all other cases (i.e. next cage is empty).
 	}
@@ -180,6 +182,7 @@ bool Field::isWalkable(int x, int y)
 	return true;
 }
 
+// Description: Prints map using the specified stream
 void Field::saveMap(ostream &sout)
 {
 	sout << endl;

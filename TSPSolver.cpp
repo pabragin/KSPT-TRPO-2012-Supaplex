@@ -19,17 +19,23 @@ TSPSolver::~TSPSolver(void)
 {
 }
 
+// Description: Returns result path as sequence of cells's coordinates
 vector<pair<int, int>> * TSPSolver::GetTourPath()
 {
 	return & this->path;
 }
 
-vector<pair<int, int>> TSPSolver::GetPath(int start, int target)
+// Description: Returns path between Start and Target nodes
+vector<pair<int, int>> TSPSolver::GetPath(const int & start, const int & target)
 {
 	// Check node's order
 	if (start < target)
 		return this->pathMatrix[pair<int, int> (start, target)];
 	else {
+		// pathMatrix contains paths from A to B, where A < B.
+		// But path from A to B, where A > B, is path from B to A in reverse order.
+		// So, we need to reverse vector
+
 		vector<pair<int, int>> resultPath;
 		vector<pair<int, int>> * ptr = & this->pathMatrix[pair<int, int> (target, start)];
 		int size = ptr->size();
@@ -40,36 +46,35 @@ vector<pair<int, int>> TSPSolver::GetPath(int start, int target)
 	}
 }
 
+// Description: Returns nodes
 vector<pair<int, int>> * TSPSolver::GetNodes()
 {
 	return & this->nodes;
 }
 
+// Description: Returns tour, i.e. nodes order in path
 vector<int> * TSPSolver::GetTour()
 {
 	return & this->tour;
 }
 
+// Description: Returns common tour length
 int TSPSolver::GetTourDistance()
 {
 	return this->tourDistance;
 }
 
+// Description: Solves TSP problem
 void TSPSolver::Solve()
 {
-	SetDistanceMatrix();
-	CreateNearestNeighbourTour();
-    StartTwoOpt();
-	SetTourPath();
+	SetMatrix();					// initialize distance and path matrixes
+	CreateNearestNeighbourTour();	// create tour using NN algorithm
+    StartTwoOpt();					// optimize the found tour
+	SetTourPath();					// build result path as sequence of cells's coordinates
 }
 
-int TSPSolver::GetNodeFromTour(int index)
-{
-	return tour[index];
-}
-
-// Calculate matrix of distances between lambdas
-void TSPSolver::SetDistanceMatrix()
+// Description: Calculates matrix of distances and matrix of paths between lambdas
+void TSPSolver::SetMatrix()
 {
 	Astar algAstar(mine.GetMap(), mine.GetWidth(), mine.GetHeight());
 
@@ -111,11 +116,11 @@ void TSPSolver::SetDistanceMatrix()
 			// Get distance between nodes
 			int result = algAstar.FindPath(startX, startY, targetX, targetY, true);
 			if (result == 1) {
-				int pathlen = algAstar.GetPathLength();												// TBD: wow, this should be saved!
+				int pathlen = algAstar.GetPathLength();
 				dist += pathlen;
 				pathToNode = algAstar.GetResultPath();
 			}
-			else dist += mine.GetHeight()*mine.GetWidth();											// TBD: in this case it seems better to delete lambda from list and ignore it
+			else dist += mine.GetHeight()*mine.GetWidth();													// TBD: in this case it seems better to delete lambda from list and ignore it
 
 			// Map the distance to the pair of nodes
 			distMatrix[pair<int, int> (i, j)] = dist;
@@ -125,7 +130,7 @@ void TSPSolver::SetDistanceMatrix()
 	}
 }
 
-// Get distance between two nodes
+// Description: Returns distance between two nodes
 int TSPSolver::GetDistance(const int & start, const int & target)
 {
 	// Check node's order
@@ -135,13 +140,13 @@ int TSPSolver::GetDistance(const int & start, const int & target)
 		return distMatrix[pair<int,int> (target, start)];
 }
 
-// Store tour distance
+// Description: Stores tour distance
 void TSPSolver::SetTourDistance(int dist)
 {
 	this->tourDistance = dist;
 }
 
-// Calculate tour distance
+// Description: Calculates tour distance
 int TSPSolver::CalcTourDistance()
 {
 	int dist = 0;
@@ -150,13 +155,13 @@ int TSPSolver::CalcTourDistance()
 	for (int i = 0; i < size - 1; i++)
 		dist += GetDistance(tour.at(i), tour.at(i + 1));	// accumulate all distances
 
-	// And back to the beginning																// Remove it?!
+	// And back to the beginning
 	dist += GetDistance(tour.at(size - 1), tour.at(0));
 
 	return dist;
 }
 
-// Solve TSP problem with Nearest Neighbour algorithm
+// Description: Solve TSP problem with Nearest Neighbour algorithm
 void TSPSolver::CreateNearestNeighbourTour()
 {
 	set<int> nodeSet;			// temporary unique set of nodes
@@ -164,7 +169,7 @@ void TSPSolver::CreateNearestNeighbourTour()
 
 	int nodeNum = nodes.size();
 	for (int i = 0; i < nodeNum; i++)
-		nodeSet.insert(i);	// set contains nodes's serial numbers
+		nodeSet.insert(i);		// set contains nodes's serial numbers
 
 	int node = 0;
 	for (int i = 1; i <= nodeNum; i++) {
@@ -175,9 +180,11 @@ void TSPSolver::CreateNearestNeighbourTour()
 	}
 }
 
-// Returns the nearest node concerning the specified node
+// Description: Returns the nearest node concerning the specified node
 int TSPSolver::GetNearestNeighbour(const int & node, set<int> & nodeSet)
 {
+	// This algorithm is too simple to comment it
+
 	int targetNode = 0;
 
 	int minDistance = 3*mine.GetWidth()*mine.GetHeight();
@@ -194,7 +201,7 @@ int TSPSolver::GetNearestNeighbour(const int & node, set<int> & nodeSet)
 	return targetNode;
 }
 
-// Optimize TSP problem's solution with 2-opt algorithm
+// Description: Optimize TSP problem's solution with 2-opt algorithm
 void TSPSolver::StartTwoOpt()
 {
 	int size = tour.size();
@@ -208,7 +215,7 @@ void TSPSolver::StartTwoOpt()
 	SetTourDistance(CalcTourDistance());	// recalculating tour distance
 }
 
-// 2-opt algorithm
+// Description: 2-opt algorithm
 void TSPSolver::TwoOpt(const int & startN1Index, const int & targetN1Index,
 					   const int & startN2Index, const int & targetN2Index)
 {
@@ -235,16 +242,24 @@ void TSPSolver::TwoOpt(const int & startN1Index, const int & targetN1Index,
 	}
 }
 
+// Description: Builds result path as sequence of cells's coordinates
 void TSPSolver::SetTourPath()
 {
 	for (int i = 0; i < (int) tour.size() - 1; i++) {
+		// Peek two consecutive nodes
 		int start = tour.at(i);
 		int target = tour.at(i + 1);
 
+		// Get path between this nodes from path matrix
 		vector<pair<int, int>> currpath = GetPath(start, target);
+
+		// Path includes start node cell and target node cell also
+		// So, we can simply ignore currpath[0]
 		for (int j = 1; j < (int) currpath.size(); j++) {
 			path.push_back(currpath.at(j));
-			cout << path.back().first << ":" << path.back().second << endl;
+
+//			cout << path.back().first << ":" << path.back().second << endl;
+
 		}
 	}
 }

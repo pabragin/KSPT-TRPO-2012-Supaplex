@@ -19,7 +19,7 @@ public:
 	int GetWidth();
 	int GetHeight();
 	char ** GetMap();				// returns pointer to map
-	pair<int, int> GetRobot();				// returns robot coordinates
+	pair<int, int> GetRobot();		// returns robot coordinates
 	vector<pair<int, int>> GetLambdas();		// returns list of lambda's coordinates for all lambdas on map
 	pair<int, int> GetLift();					// returns lift coordinates
 	bool isLiftOpened();			// returns the state of the lift

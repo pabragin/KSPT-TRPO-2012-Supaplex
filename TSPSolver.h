@@ -20,7 +20,7 @@ public:
 	~TSPSolver(void);
 	
 	vector<pair<int, int>> * GetTourPath();
-	vector<pair<int, int>> GetPath(int start, int target);
+	vector<pair<int, int>> GetPath(const int & start, const int & target);
 	vector<pair<int, int>> * GetNodes();
 	vector<int> * GetTour();
 	int GetTourDistance();
@@ -28,19 +28,17 @@ public:
 	void Solve();
 
 private:
-	int GetNodeFromTour(int index);
-
-	void SetDistanceMatrix();
-	int GetDistance(const int & lambda1, const int & lambda2);
+	void SetMatrix();
+	int GetDistance(const int & start, const int & target);
 	void SetTourDistance(int dist);
 	int CalcTourDistance();
 
 	void CreateNearestNeighbourTour();
-	int GetNearestNeighbour(const int & lambda, set<int> & lambdaSet);
+	int GetNearestNeighbour(const int & node, set<int> & nodeSet);
 
 	void StartTwoOpt();
-	void TwoOpt(const int & startLambda1, const int & targetLambda1,
-				const int & startLambda2, const int & targetLambda2);
+	void TwoOpt(const int & startN1Index, const int & targetN1Index,
+				const int & startN2Index, const int & targetN2Index);
 
 	void SetTourPath();
 };

@@ -30,7 +30,7 @@ void Game::Solve()
 	solver.Solve();
 	int tourSize = solver.GetTour()->size();
 
-	BuildPathByCoord(solver.GetTourPath(), solver.GetNodes(), solver.GetTour());
+	BuildPathByCoord(solver.GetTourPath());
 
 	for (int i = 0; i < trace.size(); i++) {
 		cout << trace[i] << " ";
@@ -39,8 +39,7 @@ void Game::Solve()
 }
 
 // Returns trace for the robot, like 'RRRLLLLWLLA'
-void Game::BuildPathByCoord(vector<pair<int, int>> * path,
-	vector<pair<int, int>> * nodes, vector<int> * order)
+void Game::BuildPathByCoord(vector<pair<int, int>> * path)
 {
 	int x = map.GetRobot().first;
 	int y = map.GetRobot().second;
