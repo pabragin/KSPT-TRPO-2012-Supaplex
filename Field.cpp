@@ -180,7 +180,7 @@ bool Field::isWalkable(int x, int y)
 	return true;
 }
 
-void Field::printMap(ostream &sout)
+void Field::saveMap(ostream &sout)
 {
 	sout << endl;
 	for (int i = 0; i < mapHeight; i++) {

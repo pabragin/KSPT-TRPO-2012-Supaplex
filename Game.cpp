@@ -28,23 +28,39 @@ void Game::Solve()
 {
 	TSPSolver solver(this->map);
 	solver.Solve();
-	int tourSize = solver.GetTour().size();
+	int tourSize = solver.GetTour()->size();
 
-	for (int i = 0; i < tourSize; i++) {
-		cout << solver.GetTour()[i] << " ";
-	}
-	cout << endl << endl;
+	BuildPathByCoord(solver.GetTourPath(), solver.GetNodes(), solver.GetTour());
 
-	vector<pair<int, int>> tour = solver.GetNodes();
-	for (int i = 0; i < tourSize; i++) {
-		cout << tour[solver.GetTour()[i]].first << ":" << tour[solver.GetTour()[i]].second << endl;
+	for (int i = 0; i < trace.size(); i++) {
+		cout << trace[i] << " ";
 	}
 	cout << endl;
+}
 
+// Returns trace for the robot, like 'RRRLLLLWLLA'
+void Game::BuildPathByCoord(vector<pair<int, int>> * path,
+	vector<pair<int, int>> * nodes, vector<int> * order)
+{
+	int x = map.GetRobot().first;
+	int y = map.GetRobot().second;
+	for (int i = 0; i < (int) path->size(); i++) {
+		if (x - path->at(i).first == 1)
+			trace.push_back('U');
+		else if (x - path->at(i).first == -1)
+			trace.push_back('D');
+		else if (y - path->at(i).second == 1)
+			trace.push_back('L');
+		else if (y - path->at(i).second == -1)
+			trace.push_back('R');
+		else if (i != (int) path->size() - 1)
+			trace.push_back('W');
 
-	//if (!map.GetMap()) return;
-	//while (true) {
-	//	robot.Move(map.GetMap());
-	//	map.UpdateMap();
-	//}
+		x = path->at(i).first;
+		y = path->at(i).second;
+	}
+
+	if (x != map.GetLift().first || y != map.GetLift().second) {
+		trace.push_back('A');
+	}
 }

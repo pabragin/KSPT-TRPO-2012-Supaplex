@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 
-class Field
+class Field																								// TBD: loading non-rectangular maps
 {
 	int mapWidth;
 	int mapHeight;
@@ -27,5 +27,5 @@ public:
 	void UpdateMap();				// updates map according to the rules
 	bool isWalkable(int x, int y);
 
-	void printMap(ostream &sout);
+	void saveMap(ostream &sout);
 };

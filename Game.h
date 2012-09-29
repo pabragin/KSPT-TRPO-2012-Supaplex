@@ -8,12 +8,16 @@ class Game
 {
 	Field map;
 	int score;
-	vector<char> path;
+	vector<char> trace;
 public:
 	Game(void);
 	~Game(void);
 
 	int Start(char * file);
 	void Solve();
+
+private:
+	void BuildPathByCoord(vector<pair<int, int>> * path,
+		vector<pair<int, int>> * nodes, vector<int> * order);
 };
 

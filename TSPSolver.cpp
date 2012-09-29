@@ -19,9 +19,35 @@ TSPSolver::~TSPSolver(void)
 {
 }
 
-vector<int> TSPSolver::GetTour()
+vector<pair<int, int>> * TSPSolver::GetTourPath()
 {
-	return this->tour;
+	return & this->path;
+}
+
+vector<pair<int, int>> TSPSolver::GetPath(int start, int target)
+{
+	// Check node's order
+	if (start < target)
+		return this->pathMatrix[pair<int, int> (start, target)];
+	else {
+		vector<pair<int, int>> resultPath;
+		vector<pair<int, int>> * ptr = & this->pathMatrix[pair<int, int> (target, start)];
+		int size = ptr->size();
+		for (int i = size - 1; i >= 0; i--) {
+			resultPath.push_back(ptr->at(i));
+		}
+		return resultPath;
+	}
+}
+
+vector<pair<int, int>> * TSPSolver::GetNodes()
+{
+	return & this->nodes;
+}
+
+vector<int> * TSPSolver::GetTour()
+{
+	return & this->tour;
 }
 
 int TSPSolver::GetTourDistance()
@@ -34,11 +60,7 @@ void TSPSolver::Solve()
 	SetDistanceMatrix();
 	CreateNearestNeighbourTour();
     StartTwoOpt();
-}
-
-vector<pair<int, int>> TSPSolver::GetNodes()
-{
-	return this->nodes;
+	SetTourPath();
 }
 
 int TSPSolver::GetNodeFromTour(int index)
@@ -54,6 +76,7 @@ void TSPSolver::SetDistanceMatrix()
 	int size = nodes.size();
 	int maxPath = mine.GetWidth()*mine.GetHeight()/sqrt(2.0); // this is the maximum possible path on this map
 	int dist;
+	vector<pair<int, int>> pathToNode;
 
 	for (int i = 0; i < size - 1; i++) {
 		// Get start node coordinates
@@ -63,6 +86,7 @@ void TSPSolver::SetDistanceMatrix()
 
 		for (int j = i + 1; j < size; j++) {
 			dist = 0;
+			pathToNode.clear();
 
 			// Get target node coordinates
 			pair<int, int> secNode = nodes[j];
@@ -86,11 +110,17 @@ void TSPSolver::SetDistanceMatrix()
 
 			// Get distance between nodes
 			int result = algAstar.FindPath(startX, startY, targetX, targetY, true);
-			if (result == 1) dist += algAstar.GetPathLength();									// TBD: wow, this should be saved!
-			else dist += mine.GetHeight()*mine.GetWidth();										// TBD: in this case it seems better to delete lambda from list and ignore it
+			if (result == 1) {
+				int pathlen = algAstar.GetPathLength();												// TBD: wow, this should be saved!
+				dist += pathlen;
+				pathToNode = algAstar.GetResultPath();
+			}
+			else dist += mine.GetHeight()*mine.GetWidth();											// TBD: in this case it seems better to delete lambda from list and ignore it
 
 			// Map the distance to the pair of nodes
 			distMatrix[pair<int, int> (i, j)] = dist;
+			// Map the path to the pair of nodes
+			pathMatrix[pair<int, int> (i, j)] = pathToNode;
 		}
 	}
 }
@@ -202,5 +232,19 @@ void TSPSolver::TwoOpt(const int & startN1Index, const int & targetN1Index,
 	if (new_dist > old_dist) {
 		tour.at(targetN1Index) = targetNode1old;
 		tour.at(startN2Index) = startNode2old;
+	}
+}
+
+void TSPSolver::SetTourPath()
+{
+	for (int i = 0; i < (int) tour.size() - 1; i++) {
+		int start = tour.at(i);
+		int target = tour.at(i + 1);
+
+		vector<pair<int, int>> currpath = GetPath(start, target);
+		for (int j = 1; j < (int) currpath.size(); j++) {
+			path.push_back(currpath.at(j));
+			cout << path.back().first << ":" << path.back().second << endl;
+		}
 	}
 }
