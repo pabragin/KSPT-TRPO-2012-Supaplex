@@ -26,11 +26,11 @@ int Game::Start(char * file)
 
 void Game::Solve()
 {
-	TSPSolver solver(this->map);
+	TSPSolver solver(& this->map);
 	solver.Solve();
-	int tourSize = solver.GetTour()->size();
+	int tourSize = solver.GetTour().size();
 
-	BuildPathByCoord(solver.GetTourPath());
+	BuildPathByCoord(&solver.GetTourPath());
 
 	for (int i = 0; i < trace.size(); i++) {
 		cout << trace[i] << " ";

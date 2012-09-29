@@ -2,16 +2,16 @@
 #include "Astar.h"
 
 
-TSPSolver::TSPSolver(Field & amine)
+TSPSolver::TSPSolver(Field * amine)
 {
 	this->mine = amine;
 
-	if (!mine.GetLambdas().empty()) {
-		nodes.push_back(mine.GetRobot());
-		for (int i = 0; i < (int) mine.GetLambdas().size(); i++) {
-			nodes.push_back(mine.GetLambdas().at(i));
+	if (!mine->GetLambdas().empty()) {
+		nodes.push_back(mine->GetRobot());
+		for (int i = 0; i < (int) mine->GetLambdas().size(); i++) {
+			nodes.push_back(mine->GetLambdas().at(i));
 		}
-		nodes.push_back(mine.GetLift());
+		nodes.push_back(mine->GetLift());
 	}
 }
 
@@ -20,9 +20,9 @@ TSPSolver::~TSPSolver(void)
 }
 
 // Description: Returns result path as sequence of cells's coordinates
-vector<pair<int, int>> * TSPSolver::GetTourPath()
+vector<pair<int, int>> TSPSolver::GetTourPath()
 {
-	return & this->path;
+	return this->path;
 }
 
 // Description: Returns path between Start and Target nodes
@@ -47,15 +47,15 @@ vector<pair<int, int>> TSPSolver::GetPath(const int & start, const int & target)
 }
 
 // Description: Returns nodes
-vector<pair<int, int>> * TSPSolver::GetNodes()
+vector<pair<int, int>> TSPSolver::GetNodes()
 {
-	return & this->nodes;
+	return this->nodes;
 }
 
 // Description: Returns tour, i.e. nodes order in path
-vector<int> * TSPSolver::GetTour()
+vector<int> TSPSolver::GetTour()
 {
-	return & this->tour;
+	return this->tour;
 }
 
 // Description: Returns common tour length
@@ -76,10 +76,10 @@ void TSPSolver::Solve()
 // Description: Calculates matrix of distances and matrix of paths between lambdas
 void TSPSolver::SetMatrix()
 {
-	Astar algAstar(mine.GetMap(), mine.GetWidth(), mine.GetHeight());
+	Astar algAstar(mine->GetMap(), mine->GetWidth(), mine->GetHeight());
 
 	int size = nodes.size();
-	int maxPath = mine.GetWidth()*mine.GetHeight()/sqrt(2.0); // this is the maximum possible path on this map
+	int maxPath = mine->GetWidth()*mine->GetHeight()/sqrt(2.0); // this is the maximum possible path on this map
 	int dist;
 	vector<pair<int, int>> pathToNode;
 
@@ -120,7 +120,7 @@ void TSPSolver::SetMatrix()
 				dist += pathlen;
 				pathToNode = algAstar.GetResultPath();
 			}
-			else dist += mine.GetHeight()*mine.GetWidth();													// TBD: in this case it seems better to delete lambda from list and ignore it
+			else dist += mine->GetHeight()*mine->GetWidth();													// TBD: in this case it seems better to delete lambda from list and ignore it
 
 			// Map the distance to the pair of nodes
 			distMatrix[pair<int, int> (i, j)] = dist;
@@ -187,7 +187,7 @@ int TSPSolver::GetNearestNeighbour(const int & node, set<int> & nodeSet)
 
 	int targetNode = 0;
 
-	int minDistance = 3*mine.GetWidth()*mine.GetHeight();
+	int minDistance = 3*mine->GetWidth()*mine->GetHeight();
 	set<int>::iterator itr;
 	for (itr = nodeSet.begin(); itr != nodeSet.end(); itr++) {
 		int currNode = *itr;
