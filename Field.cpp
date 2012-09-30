@@ -8,6 +8,24 @@ Field::Field(void)
 	liftIsOpen = false;
 }
 
+Field::Field(const Field & field)
+{
+	mapWidth = field.mapWidth;
+	mapHeight = field.mapHeight;
+	robot = field.robot;
+	lambdas = field.lambdas;
+	lift = field.lift;
+	liftIsOpen = field.liftIsOpen;
+
+	map = new char * [mapHeight];
+	for (int i = 0; i < mapHeight; i++) {
+		map[i] = new char [mapWidth];
+		for (int j = 0; j < mapWidth; j++) {
+			map[i][j] = field.map[i][j];
+		}
+	}
+}
+
 Field::~Field(void)
 {
 	if (map)
@@ -37,7 +55,7 @@ int Field::LoadMap(char * file)
 	mapHeight = buf.size();
 	fin.seekg(0, ios::beg);
 
-	map = new char* [mapHeight];
+	map = new char * [mapHeight];
 	for (int i = 0; i < mapHeight; i++) {
 		map[i] = new char [mapWidth];
 		for (int j = 0; j < mapWidth; j++) {
@@ -66,6 +84,19 @@ int Field::LoadMap(char * file)
 	}
 
 	return 0;
+}
+
+// Description: Prints map using the specified stream
+void Field::saveMap(ostream &sout)
+{
+	sout << endl;
+	for (int i = 0; i < mapHeight; i++) {
+		for (int j = 0; j < mapWidth; j++) {
+			sout << map[i][j];
+		}
+		sout << endl;
+	}
+	sout << endl;
 }
 
 // Description: Returns map width
@@ -194,17 +225,4 @@ bool Field::isWalkable(int x, int y)																						// TBD: add some euris
 	// Robot succeeds in all other cases.
 	// I.e. there is an earth, lambda or an open lift in the cage or the cage is empty.
 	return true;
-}
-
-// Description: Prints map using the specified stream
-void Field::saveMap(ostream &sout)
-{
-	sout << endl;
-	for (int i = 0; i < mapHeight; i++) {
-		for (int j = 0; j < mapWidth; j++) {
-			sout << map[i][j];
-		}
-		sout << endl;
-	}
-	sout << endl;
 }

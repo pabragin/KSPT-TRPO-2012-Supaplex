@@ -13,9 +13,12 @@ class Field
 	bool liftIsOpen;
 public:
 	Field(void);
+	Field(const Field & field);
 	~Field(void);
 
 	int LoadMap(char * file);		// loads map from file; fills Field's fields =)
+	void saveMap(ostream &sout);
+
 	int GetWidth();
 	int GetHeight();
 	char ** GetMap();				// returns pointer to map
@@ -26,6 +29,4 @@ public:
 
 	void UpdateMap();				// updates map according to the rules
 	bool isWalkable(int x, int y);
-
-	void saveMap(ostream &sout);
 };
