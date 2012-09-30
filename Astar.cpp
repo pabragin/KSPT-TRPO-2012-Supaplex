@@ -5,7 +5,6 @@ Astar::Astar(void)
 {
 	mapWidth = -1;
 	mapHeight = -1;
-	numberOfOpenListItems = 0;
 }
 
 Astar::Astar(char ** field, int width, int height)
@@ -13,7 +12,6 @@ Astar::Astar(char ** field, int width, int height)
 	map = field;
 	mapWidth = width;
 	mapHeight = height;
-	numberOfOpenListItems = 0;
 }
 
 
@@ -35,21 +33,6 @@ int Astar::GetPathLength()
 	return this->resultPath.size();
 }
 
-// Description: Allocates memory for the open list.
-void Astar::InitOpenList()
-{
-	openList = new OpenListItem [mapWidth*mapHeight+2];
-}
-
-// Description: Frees memory used by the open list.
-void Astar::FreeOpenList()
-{
-	if (openList) {
-		delete [] openList;
-		openList = NULL;
-	}
-}
-
 // Description: Finds a path using A*.
 int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHcost)
 {
@@ -58,7 +41,9 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 	const int inOpenList = 1, inClosedList = 2;	// lists-related constants
 	int parentX, parentY, Gcost, index;
 	int ** whichList;	// used to record whether a cell is on the open list or on the closed list.
-	pair<int, int> ** parent;		// used to record parent of each cage
+	pair<int, int> ** parent;	// used to record parent of each cage
+	OpenListItem * openList;	// array holding open list items, which is maintained as a binary heap.
+	int numberOfOpenListItems;
 
 // 1. Checking start and target cells to avoid misunderstandings.
 
@@ -84,7 +69,8 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 		parent[i] = new pair<int, int> [mapWidth + 1];
 	}
 
-	InitOpenList();
+	openList = new OpenListItem [mapWidth*mapHeight+2];
+
 	resultPath.clear();
 
 // 3. Add the starting cell to the open list.
@@ -107,7 +93,7 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 			Gcost = openList[1].GetGcost();
 
 			whichList[parentX][parentY] = inClosedList;	// add item to the closed list
-			DeleteTopItemFromBinaryHeap();				// delete this item from the open list
+			DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems);				// delete this item from the open list
 
 // 4.2. Check the adjacent squares and add them to the open list
 
@@ -117,8 +103,8 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 						continue;
 
 					// If not off the map (avoiding array-out-of-bounds errors)
-					if (x != -1 && y != -1 && x != mapWidth && y != mapHeight) {
-
+					if (x != -1 && y != -1 && x != mapHeight && y != mapWidth) {
+						
 						// If not already on the closed list (items on the closed list have already been considered and can now be ignored).
 						if (whichList[x][y] != inClosedList) {
 							// If not a wall/obstacle square.
@@ -139,14 +125,14 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 									if (useHcost) openList[numberOfOpenListItems].SetHcost( (abs(x - targetX) + abs(y - targetY)) );
 									openList[numberOfOpenListItems].CalculateFcost();	// update the F cost
 									
-									//Move the new open list item to the proper place in the binary heap.
-									BubbleItemInBinaryHeap(numberOfOpenListItems);
+									// Move the new open list item to the proper place in the binary heap.
+									BubbleItemInBinaryHeap(openList, numberOfOpenListItems);
 
 									whichList[x][y] = inOpenList;	// Change whichList value.
 								}
 								// If cell is already on the open list, choose better G and F costs.
 								else {
-									index = GetItemIndexFromBinaryHeapByCoord(x, y);
+									index = GetItemIndexFromBinaryHeapByCoord(openList, numberOfOpenListItems, x, y);
 									Gcost += 1;	// Figure out the G cost of this possible new path
 
 									// If this path is shorter (G cost is lower) then change the parent cell, G cost and F cost. 		
@@ -155,7 +141,7 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 										parent[x][y].second = parentY;
 										openList[index].SetGcost(Gcost);	// change the G cost
 										openList[index].CalculateFcost();	// update the F cost
-										BubbleItemInBinaryHeap(index);		// update cell's position on the open list
+										BubbleItemInBinaryHeap(openList, index);		// update cell's position on the open list
 									}
 								}	
 							}
@@ -214,59 +200,31 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 
 // 7. Freeing used memory
 
-	FreeOpenList();
 	for (int i = 0; i < mapHeight; i++)
 		delete [] whichList[i];
 	for (int i = 0; i < mapHeight; i++)
 		delete [] parent[i];
+	delete [] openList;
 
 	return path;
 }
 
 
 // Description: Deletes the top item in binary heap and reorder the heap, with the lowest F cost item rising to the top.
-void Astar::DeleteTopItemFromBinaryHeap()
+void Astar::DeleteTopItemFromBinaryHeap(OpenListItem * heap, int & heapLength)
 {
-	numberOfOpenListItems--;							// decrease number of open list items
-	openList[1] = openList[numberOfOpenListItems+1];	// move the last item in the heap up to slot #1
-	int curr, next = 1;
-
-	// Repeat the following until the new item in slot #1 sinks to its proper spot in the heap.
-	while (true) {
-		curr = next;		
-		if (2*curr + 1 <= numberOfOpenListItems) {	// if both children exist
-			// Check if the F cost of the parent is greater than each child and select the lowest one.
-			if (openList[curr].GetFcost() >= openList[2*curr].GetFcost()) 
-				next = 2*curr;
-			if (openList[next].GetFcost() >= openList[2*curr + 1].GetFcost())
-				next = 2*curr+1;		
-		} else {
-			if (2*curr <= numberOfOpenListItems) {	// if only child #1 exists
-				// Check if the F cost of the parent is greater than child #1	
-				if (openList[curr].GetFcost() >= openList[2*curr].GetFcost()) 
-					next = 2*curr;
-			}
-		}
-
-		if (curr != next) {	// if parent's F > one of its children, swap them
-			OpenListItem temp = openList[curr];
-			openList[curr] = openList[next];
-			openList[next] = temp;
-		} else break;		// otherwise, exit loop
-	}
-}
-
-// Description: Creates a new open list item in the binary heap.
-void Astar::AddItemToBinaryHeap()
-{
+	heapLength--;								// decrease number of items in heap
+	heap[1] = heap[heapLength + 1];				// move last item up to slot #1
+	SinkItemInBinaryHeap(heap, heapLength, 1);				// move item to the properly position
+	
 }
 
 // Description: Finds the item in the binary heap by cell's coordinates and returns its index.
-int Astar::GetItemIndexFromBinaryHeapByCoord(const int & x, const int & y)
+int Astar::GetItemIndexFromBinaryHeapByCoord(OpenListItem * heap, int heapLength, const int & x, const int & y)
 {
 	int index = -1;
-	for (int i = 1; i <= numberOfOpenListItems; i++) {
-		if (openList[i].GetX() == x && openList[i].GetY() == y) {
+	for (int i = 1; i <= heapLength; i++) {
+		if (heap[i].GetX() == x && heap[i].GetY() == y) {
 			index = i;
 			break;
 		}
@@ -274,16 +232,46 @@ int Astar::GetItemIndexFromBinaryHeapByCoord(const int & x, const int & y)
 	return index;
 }
 
-// Description: Sets target item in properly position in binary heap
-void Astar::BubbleItemInBinaryHeap(int index)
+// Description: Bubbles target item to the properly position in binary heap
+void Astar::BubbleItemInBinaryHeap(OpenListItem * heap, int index)
 {
 	while (index != 1) {	// While item hasn't bubbled to the top
 		// Swap items if child < parent.
-		if (openList[index].GetFcost() <= openList[index/2].GetFcost()) {
-			OpenListItem temp = openList[index/2];
-			openList[index/2] = openList[index];
-			openList[index] = temp;
+		if (heap[index].GetFcost() <= heap[index/2].GetFcost()) {
+			OpenListItem temp = heap[index/2];
+			heap[index/2] = heap[index];
+			heap[index] = temp;
 			index = index/2;
 		} else break;
+	}
+}
+
+// Description: Sinks target item to the properly position in binary heap
+void Astar::SinkItemInBinaryHeap(OpenListItem * heap, int heapLength, int index)
+{
+	int curr, next = 1;
+
+	// Repeat the following until the new item in slot #1 sinks to its proper spot in the heap.
+	while (true) {
+		curr = next;		
+		if (2*curr + 1 <= heapLength) {	// if both children exist
+			// Check if the F cost of the parent is greater than each child and select the lowest one.
+			if (heap[curr].GetFcost() >= heap[2*curr].GetFcost()) 
+				next = 2*curr;
+			if (heap[next].GetFcost() >= heap[2*curr + 1].GetFcost())
+				next = 2*curr+1;		
+		} else {
+			if (2*curr <= heapLength) {	// if only child #1 exists
+				// Check if the F cost of the parent is greater than child #1	
+				if (heap[curr].GetFcost() >= heap[2*curr].GetFcost()) 
+					next = 2*curr;
+			}
+		}
+
+		if (curr != next) {	// if parent's F > one of its children, swap them
+			OpenListItem temp = heap[curr];
+			heap[curr] = heap[next];
+			heap[next] = temp;
+		} else break;		// otherwise, exit loop
 	}
 }
