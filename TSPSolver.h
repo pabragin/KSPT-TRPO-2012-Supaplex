@@ -9,10 +9,10 @@ class TSPSolver
 {
 	Field * mine;
 	map<pair<int, int>, int> distMatrix;
-	map<pair<int, int>, vector<pair<int, int>>> pathMatrix;
+	map<pair<int, int>, CoordinatesVector> pathMatrix;
 
-	vector<pair<int, int>> path;
-	vector<pair<int, int>> nodes;
+	CoordinatesVector path;
+	CoordinatesVector nodes;
 	vector<int> tour;
 	int tourDistance;
 
@@ -21,9 +21,9 @@ public:
 	TSPSolver(Field * amine);
 	~TSPSolver(void);
 	
-	vector<pair<int, int>> GetTourPath();
-	vector<pair<int, int>> GetPath(const int & start, const int & target);
-	vector<pair<int, int>> GetNodes();
+	CoordinatesVector GetTourPath();
+	CoordinatesVector GetPath(const int & start, const int & target);
+	CoordinatesVector GetNodes();
 	vector<int> GetTour();
 	int GetTourDistance();
 

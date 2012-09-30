@@ -1,5 +1,6 @@
 #include "TSPSolver.h"
 #include "Astar.h"
+#include <math.h>
 
 
 TSPSolver::TSPSolver(Field * amine)
@@ -20,13 +21,13 @@ TSPSolver::~TSPSolver(void)
 }
 
 // Description: Returns result path as sequence of cells's coordinates
-vector<pair<int, int>> TSPSolver::GetTourPath()
+CoordinatesVector TSPSolver::GetTourPath()
 {
 	return this->path;
 }
 
 // Description: Returns path between Start and Target nodes
-vector<pair<int, int>> TSPSolver::GetPath(const int & start, const int & target)
+CoordinatesVector TSPSolver::GetPath(const int & start, const int & target)
 {
 	// Check node's order
 	if (start < target)
@@ -36,8 +37,8 @@ vector<pair<int, int>> TSPSolver::GetPath(const int & start, const int & target)
 		// But path from A to B, where A > B, is path from B to A in reverse order.
 		// So, we need to reverse vector
 
-		vector<pair<int, int>> resultPath;
-		vector<pair<int, int>> * ptr = & this->pathMatrix[pair<int, int> (target, start)];
+		CoordinatesVector resultPath;
+		CoordinatesVector * ptr = & this->pathMatrix[pair<int, int> (target, start)];
 		int size = ptr->size();
 		for (int i = size - 1; i >= 0; i--) {
 			resultPath.push_back(ptr->at(i));
@@ -47,7 +48,7 @@ vector<pair<int, int>> TSPSolver::GetPath(const int & start, const int & target)
 }
 
 // Description: Returns nodes
-vector<pair<int, int>> TSPSolver::GetNodes()
+CoordinatesVector TSPSolver::GetNodes()
 {
 	return this->nodes;
 }
@@ -79,13 +80,13 @@ void TSPSolver::SetMatrixes()
 	Astar algAstar(mine->GetMap(), mine->GetWidth(), mine->GetHeight());
 
 	int size = nodes.size();
-	int maxPath = mine->GetWidth()*mine->GetHeight()/sqrt(2.0); // this is the maximum possible path on this map
+	int maxPath = (mine->GetWidth()) * (mine->GetHeight()) / sqrt(2.0); // this is the maximum possible path on this map
 	int dist;
-	vector<pair<int, int>> pathToNode;
+	CoordinatesVector pathToNode;
 
 	for (int i = 0; i < size - 1; i++) {
 		// Get start node coordinates
-		pair<int, int> firNode = nodes[i];
+		Coordinates firNode = nodes[i];
 		int startX = firNode.first;
 		int startY = firNode.second;
 
@@ -94,7 +95,7 @@ void TSPSolver::SetMatrixes()
 			pathToNode.clear();
 
 			// Get target node coordinates
-			pair<int, int> secNode = nodes[j];
+			Coordinates secNode = nodes[j];
 			int targetX = secNode.first;
 			int targetY = secNode.second;
 
@@ -265,7 +266,7 @@ void TSPSolver::SetTourPath()
 		int target = tour.at(i + 1);
 
 		// Get path between this nodes from path matrix
-		vector<pair<int, int>> currpath = GetPath(start, target);
+		CoordinatesVector currpath = GetPath(start, target);
 
 		// Path includes start node cell and target node cell also
 		// So, we can simply ignore currpath[0]

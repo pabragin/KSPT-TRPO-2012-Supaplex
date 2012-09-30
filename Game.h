@@ -17,6 +17,6 @@ public:
 	void Solve();
 
 private:
-	void BuildPathByCoord(vector<pair<int, int>> * path);
+	void BuildPathByCoord(CoordinatesVector * path);
 };
 

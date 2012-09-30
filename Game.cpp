@@ -28,18 +28,19 @@ void Game::Solve()
 {
 	TSPSolver solver(& this->map);
 	solver.Solve();
-	int tourSize = solver.GetTour().size();
+	//int tourSize = solver.GetTour().size(); // Why was this here?
 
-	BuildPathByCoord(&solver.GetTourPath());
+  CoordinatesVector tourPath = solver.GetTourPath();
+	BuildPathByCoord(&tourPath);
 
-	for (int i = 0; i < trace.size(); i++) {
+	for (size_t i = 0; i < trace.size(); i++) {
 		cout << trace[i] << " ";
 	}
 	cout << endl;
 }
 
 // Returns trace for the robot, like 'RRRLLLLWLLA'
-void Game::BuildPathByCoord(vector<pair<int, int>> * path)
+void Game::BuildPathByCoord(CoordinatesVector * path)
 {
 	int x = map.GetRobot().first;
 	int y = map.GetRobot().second;

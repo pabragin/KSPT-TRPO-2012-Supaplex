@@ -5,12 +5,14 @@
 
 #pragma once
 
-#include "OpenListItem.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
 
 using namespace std;
+
+#include "Forwards.h"
+#include "OpenListItem.h"
 
 // TODO: reference additional headers your program requires here

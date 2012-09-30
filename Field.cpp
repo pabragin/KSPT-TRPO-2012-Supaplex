@@ -42,7 +42,7 @@ int Field::LoadMap(char * file)
 
 	vector<string> buf;
 	string str;
-	int width = 0;
+	unsigned int width = 0;
 
 	// Counting mine's dimension
 	while (!fin.eof()) {
@@ -71,7 +71,7 @@ int Field::LoadMap(char * file)
 				robot.first = i;
 				robot.second = j;
 			} else if (map[i][j] == '\\')
-				lambdas.push_back(pair<int, int>(i, j));	// filling lambdas's list
+				lambdas.push_back(Coordinates(i, j));	// filling lambdas's list
 			else if (map[i][j] == 'L') {		// remembering closed lift coordinates
 				lift.first = i;
 				lift.second = j;
@@ -118,19 +118,19 @@ char ** Field::GetMap()
 }
 
 // Description: Returns robot coordinates
-pair<int, int> Field::GetRobot()
+Coordinates Field::GetRobot()
 {
 	return this->robot;
 }
 
 // Description: Returns list of lambda's coordinates for all lambdas on map
-vector<pair<int, int>> Field::GetLambdas()
+CoordinatesVector Field::GetLambdas()
 {
 	return this->lambdas;
 }
 
 // Description: Returns lift coordinates
-pair<int, int> Field::GetLift()
+Coordinates Field::GetLift()
 {
 	return this->lift;
 }
