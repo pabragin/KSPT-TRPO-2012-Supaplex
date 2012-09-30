@@ -67,14 +67,14 @@ int TSPSolver::GetTourDistance()
 // Description: Solves TSP problem
 void TSPSolver::Solve()
 {
-	SetMatrix();					// initialize distance and path matrixes
+	SetMatrixes();					// initialize distance and path matrixes
 	CreateNearestNeighbourTour();	// create tour using NN algorithm
     StartTwoOpt();					// optimize the found tour
 	SetTourPath();					// build result path as sequence of cells's coordinates
 }
 
 // Description: Calculates matrix of distances and matrix of paths between lambdas
-void TSPSolver::SetMatrix()
+void TSPSolver::SetMatrixes()
 {
 	Astar algAstar(mine->GetMap(), mine->GetWidth(), mine->GetHeight());
 
@@ -114,7 +114,7 @@ void TSPSolver::SetMatrix()
 			}
 
 			// Get distance between nodes
-			int result = algAstar.FindPath(startX, startY, targetX, targetY, true);
+			int result = algAstar.FindPath(startX, startY, targetX, targetY);
 			if (result == 1) {
 				int pathlen = algAstar.GetPathLength();
 				dist += pathlen;
@@ -159,6 +159,20 @@ int TSPSolver::CalcTourDistance()
 	dist += GetDistance(tour.at(size - 1), tour.at(0));
 
 	return dist;
+}
+
+// Description: Saves current mine state
+void TSPSolver::MakeSnapshot()
+{
+	Field f = *mine;
+	snapshot.push_back(f);
+}
+
+// Description: Restores last mine state
+void TSPSolver::LoadSnapshot()
+{
+	*mine = snapshot.back();
+	snapshot.pop_back();
 }
 
 // Description: Solve TSP problem with Nearest Neighbour algorithm

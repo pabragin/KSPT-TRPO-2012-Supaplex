@@ -15,6 +15,8 @@ class TSPSolver
 	vector<pair<int, int>> nodes;
 	vector<int> tour;
 	int tourDistance;
+
+	vector<Field> snapshot;
 public:
 	TSPSolver(Field * amine);
 	~TSPSolver(void);
@@ -28,10 +30,13 @@ public:
 	void Solve();
 
 private:
-	void SetMatrix();
+	void SetMatrixes();
 	int GetDistance(const int & start, const int & target);
 	void SetTourDistance(int dist);
 	int CalcTourDistance();
+
+	void MakeSnapshot();
+	void LoadSnapshot();
 
 	void CreateNearestNeighbourTour();
 	int GetNearestNeighbour(const int & node, set<int> & nodeSet);
