@@ -3,13 +3,15 @@
 
 #include "Game.h"
 
-char * filename = "..//IO files//input15.txt";
+//char * filename = "..//IO Files//input10x14.txt";
+char * filename = "Maps//contest10.mine";
+const int & iterations = 1;
 
 int main(int argc, char* argv[])
 {
 	Game game;
 	game.Start(filename);
-	game.Solve();
+	game.Solve(iterations);
 
 	return 0;
 }

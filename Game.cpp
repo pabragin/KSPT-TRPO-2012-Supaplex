@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "Simulator.h"
 
 
 Game::Game(void)
@@ -24,18 +25,44 @@ int Game::Start(char * file)
 	return 0;
 }
 
-void Game::Solve()
+void Game::Solve(const int & iterations)
 {
 	TSPSolver solver(& this->map);
-	solver.Solve();
+	solver.Solve(iterations);
+
+	Simulator sim(& this->map);
+	sim.StartSimulation(solver.GetNodes());
+
+
 	int tourSize = solver.GetTour().size();
 
-	BuildPathByCoord(&solver.GetTourPath());
+	ofstream fout("..//IO files//output.txt");
 
-	for (int i = 0; i < trace.size(); i++) {
-		cout << trace[i] << " ";
+
+	for (int i = 0; i < sim.GetPath().size(); i++) {
+		fout << sim.GetPath().at(i).first << ":" << sim.GetPath().at(i).second << endl;
 	}
-	cout << endl;
+	fout << endl;
+
+
+	//for (int i = 0; i < solver.GetTourPath().size(); i++) {
+	//	fout << solver.GetTourPath()[i].first << ":" << solver.GetTourPath()[i].second << endl;
+	//}
+	//fout << endl;
+
+	//for (int i = 0; i < solver.GetTour().size(); i++) {
+	//	fout << solver.GetNodes()[solver.GetTour()[i]].first << ":" << solver.GetNodes()[solver.GetTour()[i]].second << endl;
+	//}
+	//fout << endl;
+
+	//BuildPathByCoord(&solver.GetTourPath());
+
+	//for (int i = 0; i < trace.size(); i++) {
+	//	fout << trace[i];
+	//}
+	//fout << endl;
+
+	fout.close();
 }
 
 // Returns trace for the robot, like 'RRRLLLLWLLA'

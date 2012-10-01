@@ -27,11 +27,11 @@ public:
 	vector<int> GetTour();
 	int GetTourDistance();
 
-	void Solve();
+	void Solve(const int & iterations);
 
 private:
 	void SetMatrixes();
-	int GetDistance(const int & start, const int & target);
+	int GetDistance(const int & node1, const int & node2);
 	void SetTourDistance(int dist);
 	int CalcTourDistance();
 
@@ -45,6 +45,13 @@ private:
 	void TwoOpt(const int & startN1Index, const int & targetN1Index,
 				const int & startN2Index, const int & targetN2Index);
 
+	vector<pair<int, int>> FindPath(int startX, int startY,
+									int targetX, int targetY,
+									bool useHcost = true);	// Finds a path using A*.			// TBD: using useHcost = false (i.e. Dijkstra instead of Astar) is useless?
+	void DeleteTopItemFromBinaryHeap(OpenListItem * heap, int & heapLength);
+	int GetItemIndexFromBinaryHeapByCoord(OpenListItem * heap, int heapLength, const int & x, const int & y);
+	void BubbleItemInBinaryHeap(OpenListItem * heap, int index);
+	void SinkItemInBinaryHeap(OpenListItem * heap, int heapLength, int index);
+
 	void SetTourPath();
 };
-

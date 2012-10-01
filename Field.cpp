@@ -99,6 +99,40 @@ void Field::saveMap(ostream &sout)
 	sout << endl;
 }
 
+// Description: Changes robot coordinates
+void Field::SetRobot(int x, int y)
+{
+	robot.first = x;
+	robot.second = y;
+}
+
+void Field::SetLiftState(bool isOpen)
+{
+	liftIsOpen = isOpen;
+}
+
+void Field::ReorderLambdas(vector<int> order)
+{
+	//vector<pair<int, int>> tmp;
+	//for (int i = 0; i < order.size(); i++) {
+	//	tmp.push_back(lambdas.at(order.at(i)));
+	//}
+	//lambdas.clear();
+	//for (int i = 0; i < tmp.size(); i++) {
+	//	lambdas.push_back(tmp.at(i));
+	//}
+}
+
+void Field::ClearLambdas()
+{
+	lambdas.clear();
+}
+
+void Field::AddLambda(pair<int, int> lambda)
+{
+	lambdas.push_back(lambda);
+}
+
 // Description: Returns map width
 int Field::GetWidth()
 {
@@ -141,71 +175,6 @@ bool Field::isLiftOpened()
 	return this->liftIsOpen;
 }
 
-// Description: Updates map according to the rules
-void Field::UpdateMap()
-{
-	// Creating new state to record changes on the map
-	char ** newState = new char* [mapHeight];
-	for (int i = 0; i < mapHeight; i++) {
-		newState[i] = new char [mapWidth];
-		for (int j = 0; j < mapWidth; j++) {
-			newState[i][j] = '#';
-		}
-	}
-	
-	for (int i = 1; i < mapHeight - 1; i++) {
-		for (int j = 1; j < mapWidth - 1; j++) {
-			// If (x; y) contains a Rock, and (x; y-1) is Empty:
-			// (x; y) is updated to Empty, (x; y-1) is updated to Rock.
-			if (map[i][j] == '*' && map[i + 1][j] == ' ') {
-				newState[i][j] = ' ';
-				newState[i + 1][j] = '*';
-			}
-			// If (x; y) contains a Rock, (x; y-1) contains a Rock, (x+1; y) is Empty and (x+1; y-1) is Empty:
-			// (x; y) is updated to Empty, (x+1; y-1) is updated to Rock.
-			else if (map[i][j] == '*' && map[i + 1][j] == '*'
-				&& map[i][j + 1] == ' ' && map[i + 1][j + 1] == ' ') {
-					newState[i][j] = ' ';
-					newState[i + 1][j + 1] = '*';
-			}
-			// If (x; y) contains a Rock, (x; y-1) contains a Rock, either (x+1; y) is not Empty
-			// or (x+1; y-1) is not Empty, (x-1; y) is Empty and (x-1; y-1) is Empty:
-			// (x; y) is updated to Empty, (x-1; y-1) is updated to Rock.
-			else if (map[i][j] == '*' && map[i + 1][j] == '*'
-				&& (map[i][j + 1] != ' ' || map[i + 1][j + 1] != ' ')
-				&& map[i][j - 1] == ' ' && map[i + 1][j - 1] == ' ') {
-					newState[i][j] = ' ';
-					newState[i + 1][j - 1] = '*';
-			}
-			// If (x; y) contains a Rock, (x; y-1) contains a Lambda, (x+1; y) is Empty and (x+1; y-1) is Empty:
-			// (x; y) is updated to Empty, (x+1; y-1) is updated to Rock.
-			else if (map[i][j] == '*' && map[i + 1][j] == '\\'
-				&& map[i][j + 1] == ' ' && map[i + 1][j + 1] == ' ') {
-					newState[i][j] = ' ';
-					newState[i + 1][j + 1] = '*';
-			}
-			// In all other cases, (x; y) remains unchanged.
-		}
-	}
-	// If (x; y) contains a Closed Lambda Lift, and there are no Lambdas remaining:
-	// (x; y) is updated to Open Lambda Lift.
-	if (lambdas.empty()) {
-		liftIsOpen = true;
-		newState[lift.first][lift.second] = 'O';
-	}
-
-	// Rewriting old map according to the new state
-	for (int i = 0; i < mapHeight; i++) {
-		for (int j = 0; j < mapWidth; j++) {
-			if (newState[i][j] != '#') map[i][j] = newState[i][j];
-		}
-	}
-
-	// Freeing memory
-	for (int i = 0; i < mapHeight; i++)
-		delete [] newState[i];
-}
-
 // Description: Checks, whether robot can go on this cage or not
 bool Field::isWalkable(int x, int y)																						// TBD: add some euristic
 {
@@ -214,10 +183,10 @@ bool Field::isWalkable(int x, int y)																						// TBD: add some euris
 	// On the other side, robot can't go on right or left cage concerning him
 	// if there is a stone in this cage and there is something in next cage
 	if (map[x][y] == '*') {											// If there is a stone in this cage:
-		if (x - 1 == robot.first && y == robot.second) {			// then, if robot is to the left of a cage
-			if (map[x + 1][y] != ' ') return false;					// then robot fails if the right cage near stone isn't empty
-		} else if (x + 1 == robot.first && y == robot.second) {		// otherwise, if robot is to the right of a cage
-			if (map[x - 1][y] != ' ') return false;					// then robot fails if the left cage near stone isn't empty.
+		if (x == robot.first && y - 1 == robot.second) {			// then, if robot is to the left of a cage
+			if (map[x][y + 1] != ' ') return false;					// then robot fails if the right cage near stone isn't empty
+		} else if (x == robot.first && y + 1 == robot.second) {		// otherwise, if robot is to the right of a cage
+			if (map[x][y - 1] != ' ') return false;					// then robot fails if the left cage near stone isn't empty.
 		} else return true;											// Robot succeeds in all other cases (i.e. next cage is empty).
 	}
 	// If there is a closed lift, then robot fails

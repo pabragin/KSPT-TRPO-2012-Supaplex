@@ -1,7 +1,6 @@
 #pragma once
 
 #include "stdafx.h"
-#include "Field.h"
 #include "TSPSolver.h"
 
 class Game
@@ -14,7 +13,7 @@ public:
 	~Game(void);
 
 	int Start(char * file);
-	void Solve();
+	void Solve(const int & iterations);
 
 private:
 	void BuildPathByCoord(vector<pair<int, int>> * path);

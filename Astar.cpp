@@ -215,7 +215,7 @@ void Astar::DeleteTopItemFromBinaryHeap(OpenListItem * heap, int & heapLength)
 {
 	heapLength--;								// decrease number of items in heap
 	heap[1] = heap[heapLength + 1];				// move last item up to slot #1
-	SinkItemInBinaryHeap(heap, heapLength, 1);				// move item to the properly position
+	SinkItemInBinaryHeap(heap, heapLength, 1);	// move item to the properly position
 	
 }
 

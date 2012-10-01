@@ -19,6 +19,12 @@ public:
 	int LoadMap(char * file);		// loads map from file; fills Field's fields =)
 	void saveMap(ostream &sout);
 
+	void SetRobot(int x, int y);		// changes robot coordinates
+	void SetLiftState(bool isOpen);
+	void ReorderLambdas(vector<int> order);
+	void ClearLambdas();
+	void AddLambda(pair<int, int> lambda);
+
 	int GetWidth();
 	int GetHeight();
 	char ** GetMap();				// returns pointer to map
@@ -27,6 +33,5 @@ public:
 	pair<int, int> GetLift();					// returns lift coordinates
 	bool isLiftOpened();			// returns the state of the lift
 
-	void UpdateMap();				// updates map according to the rules
 	bool isWalkable(int x, int y);
 };
