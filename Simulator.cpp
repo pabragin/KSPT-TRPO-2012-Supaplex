@@ -29,18 +29,18 @@ void Simulator::StartSimulation(vector<pair<int, int>> waypoints)
 
 	mine.SaveMap(cout);															// testing print to stdout
 
-	// тут, в принципе, все нормально
+	// ГљГ›Гљ, вЂљ Г”пЈїГ‹ГЊЛ†Г‹Г”Г‚, вЂљГ’Г‚ ГЊГ“пЈїГЏвЂЎГЋВёГЊГ“
 	for (int i = mine.GetLambdas().size() - 1; i >= 0; i--) {					// waypoint #0 is a Robot !!!
 		MakeSnapshot();
 
-		// тестовый вывод карты в консоль
+		// ГљГ‚Г’ГљГ“вЂљЛљГ€ вЂљЛљвЂљГ“вЂ° ГЌвЂЎпЈїГљЛљ вЂљ ГЌГ“ГЊГ’Г“ГЋВё
 		//cout << "Saved global snapshot:" << endl;
 		//snapshot.back().SaveMap(cout);
 
 		result = MoveRobot(mine.GetLambdas().at(i));
-		if (result == -1) {														// точно не break - подумать
+		if (result == -1) {														// ГљГ“ЛњГЊГ“ ГЊГ‚ break - Г”Г“вЂ°Г›ГЏвЂЎГљВё
 			LoadSnapshot();
-			// тестовый вывод карты в консоль
+			// ГљГ‚Г’ГљГ“вЂљЛљГ€ вЂљЛљвЂљГ“вЂ° ГЌвЂЎпЈїГљЛљ вЂљ ГЌГ“ГЊГ’Г“ГЋВё
 			//cout << "Loaded global snapshot:" << endl;
 			//mine.SaveMap(cout);
 			missedLambdas.push_back(mine.GetLambdas().at(i));
@@ -119,9 +119,41 @@ void Simulator::UpdateMap()
 		delete [] newState[i];
 }
 
-
-																// Использовать А*, модифицированную для учета динамических событий в шахте.
-																// Для начала - реагирующую на смерть робота
+bool Simulator::IsLiftBlocked() { //is lift blocked? lets see (will return true or false)
+    
+    int rob_x = mine.GetRobot().first;     //some varibles
+	int rob_y = mine.GetRobot().second;
+    int lift_x = mine.GetLift().first;
+    int lift_y = mine.GetLift().second;
+    // set of cases when the lift is blocked 
+    if ((rob_x == lift_x)&&(rob_y-2 == lift_y)&&!(mine.GetMap()[rob_x+1][rob_y+2] == ' ')){
+        return true;
+    }
+    if ((rob_x == lift_x)&&(rob_y+2 == lift_y)&&!(mine.GetMap()[rob_x+1][rob_y-2] == ' ')){
+        return true;
+    }
+    if (((mine.GetMap()[rob_x][rob_y-2] == '*')||(mine.GetMap()[rob_x][rob_y-2] == '#'))&& (rob_x+1 == lift_x)&&(rob_y-1 == lift_y)){
+        return true;
+    }
+    if (((mine.GetMap()[rob_x][rob_y+2] == '*')||(mine.GetMap()[rob_x][rob_y+2] == '#'))&&((rob_x+1 == lift_x)&&(rob_y+1 == lift_y))){
+        return true;
+    }
+    //ban drop stones on the lift
+    if(((lift_y == rob_y-1)||(lift_y == rob_y+1))&& (!(mine.GetMap()[lift_x-1][lift_y+1] == ' ')||!(mine.GetMap()[lift_x-1][lift_y-1] == ' '))){
+        for (int i=1 ;i < (lift_x-rob_x-1);i++){
+             if (mine.GetMap()[rob_x+i][rob_y-1] == ' '){
+                  liftBlocked = true;
+              }
+             else {
+                 liftBlocked = false;
+             }
+       } return liftBlocked;
+    }
+    else {
+        return false;
+    }
+}																// В»Г’Г”Г“ГЋВёГЃГ“вЂљвЂЎГљВё Вї*, ГЏГ“вЂ°Г‹Г™Г‹Л†Г‹пЈїГ“вЂљвЂЎГЊГЊГ›Л› вЂ°ГЋЛ‡ Г›ЛњГ‚ГљвЂЎ вЂ°Г‹ГЊвЂЎГЏГ‹ЛњГ‚Г’ГЌГ‹Д± Г’Г“В·ЛљГљГ‹Г€ вЂљ ВЇвЂЎД±ГљГ‚.
+																// Ж’ГЋЛ‡ ГЊвЂЎЛњвЂЎГЋвЂЎ - пЈїГ‚вЂЎвЂћГ‹пЈїГ›Л›ЛГ›Л› ГЊвЂЎ Г’ГЏГ‚пЈїГљВё пЈїГ“В·Г“ГљвЂЎ
 int Simulator::MoveRobot(pair<int, int> target) {
 	int time = 0;
 	const int infinity = 1000000;
@@ -213,39 +245,49 @@ int Simulator::MoveRobot(pair<int, int> target) {
 			//	}
 			//}
 
-			// Если это не первая клетка пути
+			// в‰€Г’ГЋГ‹ ЛќГљГ“ ГЊГ‚ Г”Г‚пЈївЂљвЂЎЛ‡ ГЌГЋГ‚ГљГЌвЂЎ Г”Г›ГљГ‹
 			if (openList[1].GetX() != startX || openList[1].GetY() != startY) {
-				// загружаем состояние карты на тот момент, когда робот доходит до клетки, родительской к этой клетке
+				// ГЃвЂЎвЂћпЈїГ›ГЉвЂЎГ‚ГЏ Г’Г“Г’ГљГ“Л‡ГЊГ‹Г‚ ГЌвЂЎпЈїГљЛљ ГЊвЂЎ ГљГ“Гљ ГЏГ“ГЏГ‚ГЊГљ, ГЌГ“вЂћвЂ°вЂЎ пЈїГ“В·Г“Гљ вЂ°Г“Д±Г“вЂ°Г‹Гљ вЂ°Г“ ГЌГЋГ‚ГљГЌГ‹, пЈїГ“вЂ°Г‹ГљГ‚ГЋВёГ’ГЌГ“Г€ ГЌ ЛќГљГ“Г€ ГЌГЋГ‚ГљГЌГ‚
 				mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
-				// делаем шаг и апдейтим карту
-				Step(openList[1].GetX(), openList[1].GetY());
-				UpdateMap();
+				// вЂ°Г‚ГЋвЂЎГ‚ГЏ ВЇвЂЎвЂћ Г‹ вЂЎГ”вЂ°Г‚Г€ГљГ‹ГЏ ГЌвЂЎпЈїГљГ›
+				bool stoneMoved = Step(openList[1].GetX(), openList[1].GetY());
+               // if lift is blicked? Checking only then stone is moved
+                if(stoneMoved){
+                if (IsLiftBlocked()) {
+                    openList[1].SetHcost(infinity);
+                     whichList[parentX][parentY] = inClosedList;                   // add item to the closed list
+                     DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems); // delete this item from the open list
+                     mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
+                     continue;
+                    }
+			    }
+                UpdateMap();
 
-				// тестовый вывод карты в консоль
-				//mine.SaveMap(cout);																		// testing print to stdout
+				// ГљГ‚Г’ГљГ“вЂљЛљГ€ вЂљЛљвЂљГ“вЂ° ГЌвЂЎпЈїГљЛљ вЂљ ГЌГ“ГЊГ’Г“ГЋВё
+				mine.SaveMap(cout);																		// testing print to stdout
 			}
 
-			// Шаг сделан - можно проверять получившуюся ситуацию
-			// именно тут надо вызывать функции проверки варианта смерти робота, по идее
+			// ГївЂЎвЂћ Г’вЂ°Г‚ГЋвЂЎГЊ - ГЏГ“ГЉГЊГ“ Г”пЈїГ“вЂљГ‚пЈїЛ‡ГљВё Г”Г“ГЋГ›ЛњГ‹вЂљВЇГ›Л›Г’Л‡ Г’Г‹ГљГ›вЂЎЛ†Г‹Л›
+			// Г‹ГЏГ‚ГЊГЊГ“ ГљГ›Гљ ГЊвЂЎвЂ°Г“ вЂљЛљГЃЛљвЂљвЂЎГљВё Г™Г›ГЊГЌЛ†Г‹Г‹ Г”пЈїГ“вЂљГ‚пЈїГЌГ‹ вЂљвЂЎпЈїГ‹вЂЎГЊГљвЂЎ Г’ГЏГ‚пЈїГљГ‹ пЈїГ“В·Г“ГљвЂЎ, Г”Г“ Г‹вЂ°Г‚Г‚
 
-			// для начала я рассмотрел случай, когда робот умирает (флаг robotIsDead выстанавливается в результате апдейта карты)
-			// это просто простейший алгоритм, его надо будет изменять, добавляя эвристику
+			// вЂ°ГЋЛ‡ ГЊвЂЎЛњвЂЎГЋвЂЎ Л‡ пЈївЂЎГ’Г’ГЏГ“ГљпЈїГ‚ГЋ Г’ГЋГ›ЛњвЂЎГ€, ГЌГ“вЂћвЂ°вЂЎ пЈїГ“В·Г“Гљ Г›ГЏГ‹пЈївЂЎГ‚Гљ (Г™ГЋвЂЎвЂћ robotIsDead вЂљЛљГ’ГљвЂЎГЊвЂЎвЂљГЋГ‹вЂљвЂЎГ‚ГљГ’Л‡ вЂљ пЈїГ‚ГЃГ›ГЋВёГљвЂЎГљГ‚ вЂЎГ”вЂ°Г‚Г€ГљвЂЎ ГЌвЂЎпЈїГљЛљ)
+			// ЛќГљГ“ Г”пЈїГ“Г’ГљГ“ Г”пЈїГ“Г’ГљГ‚Г€ВЇГ‹Г€ вЂЎГЋвЂћГ“пЈїГ‹ГљГЏ, Г‚вЂћГ“ ГЊвЂЎвЂ°Г“ В·Г›вЂ°Г‚Гљ Г‹ГЃГЏГ‚ГЊЛ‡ГљВё, вЂ°Г“В·вЂЎвЂљГЋЛ‡Л‡ ЛќвЂљпЈїГ‹Г’ГљГ‹ГЌГ›
 			if (robotIsDead) {
-				// если эта клетка - наша цель, то не нужны нам такие цели - возвращаемся назад и отбрасываем эту лямбду
+				// Г‚Г’ГЋГ‹ ЛќГљвЂЎ ГЌГЋГ‚ГљГЌвЂЎ - ГЊвЂЎВЇвЂЎ Л†Г‚ГЋВё, ГљГ“ ГЊГ‚ ГЊГ›ГЉГЊЛљ ГЊвЂЎГЏ ГљвЂЎГЌГ‹Г‚ Л†Г‚ГЋГ‹ - вЂљГ“ГЃвЂљпЈївЂЎЛвЂЎГ‚ГЏГ’Л‡ ГЊвЂЎГЃвЂЎвЂ° Г‹ Г“ГљВ·пЈївЂЎГ’ЛљвЂљвЂЎГ‚ГЏ ЛќГљГ› ГЋЛ‡ГЏВ·вЂ°Г›
 				if (openList[1].GetX() == target.first && openList[1].GetY() == target.second) {
 					result = nonexistent;
 					break;
 				}
 
-				// иначе - ставим ей удаленность до цели пути 1000000 и перемещаем ее в закрытый лист - не лучший вариант
+				// Г‹ГЊвЂЎЛњГ‚ - Г’ГљвЂЎвЂљГ‹ГЏ Г‚Г€ Г›вЂ°вЂЎГЋГ‚ГЊГЊГ“Г’ГљВё вЂ°Г“ Л†Г‚ГЋГ‹ Г”Г›ГљГ‹ 1000000 Г‹ Г”Г‚пЈїГ‚ГЏГ‚ЛвЂЎГ‚ГЏ Г‚Г‚ вЂљ ГЃвЂЎГЌпЈїЛљГљЛљГ€ ГЋГ‹Г’Гљ - ГЊГ‚ ГЋГ›ЛњВЇГ‹Г€ вЂљвЂЎпЈїГ‹вЂЎГЊГљ
 				openList[1].SetHcost(infinity);
 				whichList[parentX][parentY] = inClosedList;						// add item to the closed list
 				DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems);	// delete this item from the open list
 				mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
 
-				// тестовый вывод карты в консоль
+				// ГљГ‚Г’ГљГ“вЂљЛљГ€ вЂљЛљвЂљГ“вЂ° ГЌвЂЎпЈїГљЛљ вЂљ ГЌГ“ГЊГ’Г“ГЋВё
 				//cout << "Back:" << endl;
-				//mine.SaveMap(cout);																		// testing print to stdout
+                //mine.SaveMap(cout);																		// testing print to stdout
 
 				robotIsDead = false;
 				continue;
@@ -268,22 +310,22 @@ int Simulator::MoveRobot(pair<int, int> target) {
 			AddAdjacentCellsToOpenList(openList, numberOfOpenListItems, parentX, parentY,
 									   whichList, parent, target);
 
-/* Эта штука еще не работает!
+/* вЂєГљвЂЎ ВЇГљГ›ГЌвЂЎ Г‚ЛГ‚ ГЊГ‚ пЈївЂЎВ·Г“ГљвЂЎГ‚Гљ!
 
-			// по идее, после апдейта карты надо перебрать все клетки из закрытого списка
-			// и проверить все клетки рядом с ними - все ли находятся в openList или в закрытом списке
-			// если не все, то добавить соответствующие клетки в openList
+			// Г”Г“ Г‹вЂ°Г‚Г‚, Г”Г“Г’ГЋГ‚ вЂЎГ”вЂ°Г‚Г€ГљвЂЎ ГЌвЂЎпЈїГљЛљ ГЊвЂЎвЂ°Г“ Г”Г‚пЈїГ‚В·пЈївЂЎГљВё вЂљГ’Г‚ ГЌГЋГ‚ГљГЌГ‹ Г‹ГЃ ГЃвЂЎГЌпЈїЛљГљГ“вЂћГ“ Г’Г”Г‹Г’ГЌвЂЎ
+			// Г‹ Г”пЈїГ“вЂљГ‚пЈїГ‹ГљВё вЂљГ’Г‚ ГЌГЋГ‚ГљГЌГ‹ пЈїЛ‡вЂ°Г“ГЏ Г’ ГЊГ‹ГЏГ‹ - вЂљГ’Г‚ ГЋГ‹ ГЊвЂЎД±Г“вЂ°Л‡ГљГ’Л‡ вЂљ openList Г‹ГЋГ‹ вЂљ ГЃвЂЎГЌпЈїЛљГљГ“ГЏ Г’Г”Г‹Г’ГЌГ‚
+			// Г‚Г’ГЋГ‹ ГЊГ‚ вЂљГ’Г‚, ГљГ“ вЂ°Г“В·вЂЎвЂљГ‹ГљВё Г’Г“Г“ГљвЂљГ‚ГљГ’ГљвЂљГ›Л›ЛГ‹Г‚ ГЌГЋГ‚ГљГЌГ‹ вЂљ openList
 			//
-			// также надо исключить из открытого списка клетки, которые оказались заняты
+			// ГљвЂЎГЌГЉГ‚ ГЊвЂЎвЂ°Г“ Г‹Г’ГЌГЋЛ›ЛњГ‹ГљВё Г‹ГЃ Г“ГљГЌпЈїЛљГљГ“вЂћГ“ Г’Г”Г‹Г’ГЌвЂЎ ГЌГЋГ‚ГљГЌГ‹, ГЌГ“ГљГ“пЈїЛљГ‚ Г“ГЌвЂЎГЃвЂЎГЋГ‹Г’Вё ГЃвЂЎГЊЛ‡ГљЛљ
 			int wtf;
 			for (int i = 0; i < mine.GetHeight(); i++) {
 				for (int j = 0; j < mine.GetWidth(); j++) {
 					if (whichList[i][j] == inClosedList) {
-						// добавляем освободившиеся клетки
+						// вЂ°Г“В·вЂЎвЂљГЋЛ‡Г‚ГЏ Г“Г’вЂљГ“В·Г“вЂ°Г‹вЂљВЇГ‹Г‚Г’Л‡ ГЌГЋГ‚ГљГЌГ‹
 						AddAdjacentCellsToOpenList(openList, numberOfOpenListItems, i, j,
 													whichList, parent, target);
 					} else if (whichList[i][j] == inOpenList) {
-						// удаляем заблокированные клетки
+						// Г›вЂ°вЂЎГЋЛ‡Г‚ГЏ ГЃвЂЎВ·ГЋГ“ГЌГ‹пЈїГ“вЂљвЂЎГЊГЊЛљГ‚ ГЌГЋГ‚ГљГЌГ‹
 						if (!mine.isWalkable(i, j)) {
 							int index = GetItemIndexFromBinaryHeapByCoord(openList, numberOfOpenListItems, i, j);
 							openList[index].SetCosts(-1, -1);
@@ -346,11 +388,12 @@ int Simulator::MoveRobot(pair<int, int> target) {
 }
 
 // Description: Moves robot to the target cell
-void Simulator::Step(int x, int y)
+bool Simulator::Step(int x, int y)
 {
+    bool stoneMoved = false;
 	int xold = mine.GetRobot().first;
 	int yold = mine.GetRobot().second;
-
+    
 	// If there is a stone in this cage
 	if (mine.GetMap()[x][y] == '*') {
 		if (x == xold && y - 1 == yold) {				// then, if robot is to the left of the stone
@@ -358,11 +401,13 @@ void Simulator::Step(int x, int y)
 		} else if (x == xold && y + 1 == yold) {		// otherwise, if robot is to the right of the stone
 			mine.GetMap()[x][y - 1] = '*';
 		}
+        stoneMoved = true;
 	}
 
 	mine.GetMap()[xold][yold] = ' ';
 	mine.GetMap()[x][y] = 'R';
 	mine.SetRobot(x, y);
+    return stoneMoved;
 }
 
 // Description: Saves current mine state

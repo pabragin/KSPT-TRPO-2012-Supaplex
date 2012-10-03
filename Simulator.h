@@ -9,7 +9,8 @@ class Simulator
 
 	vector<Field> snapshot;
 	bool robotIsDead;
-
+    bool stoneMoved;
+    bool liftBlocked;
 	vector<pair<int, int>> path;
 	vector<pair<int, int>> missedLambdas;
 public:
@@ -20,12 +21,14 @@ public:
 
 	void StartSimulation(vector<pair<int, int>> waypoints);
 
+    bool IsLiftBlocked();
+    
 private:
 	void UpdateMap();	// updates map according to the rules
 
 	int MoveRobot(pair<int, int> target);
 
-	void Step(int x, int y);
+	bool Step(int x, int y);
 	void MakeSnapshot();
 	void LoadSnapshot();
 
