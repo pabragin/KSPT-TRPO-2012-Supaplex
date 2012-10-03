@@ -17,13 +17,13 @@ public:
 	~Field(void);
 
 	int LoadMap(char * file);		// loads map from file; fills Field's fields =)
-	void saveMap(ostream &sout);
+	void SaveMap(ostream &sout);
 
-	void SetRobot(int x, int y);		// changes robot coordinates
+	void SetRobot(int x, int y);	// changes robot coordinates
 	void SetLiftState(bool isOpen);
-	void ReorderLambdas(vector<int> order);
 	void ClearLambdas();
 	void AddLambda(pair<int, int> lambda);
+	void PopBackLambda();
 
 	int GetWidth();
 	int GetHeight();
@@ -34,4 +34,7 @@ public:
 	bool isLiftOpened();			// returns the state of the lift
 
 	bool isWalkable(int x, int y);
+
+
+	Field operator = (const Field & field);
 };

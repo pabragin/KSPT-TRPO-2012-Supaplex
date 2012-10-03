@@ -1,7 +1,7 @@
 #include "Simulator.h"
 
 
-Simulator::Simulator(Field * amine)
+Simulator::Simulator(Field & amine)
 {
 	this->mine = amine;
 	robotIsDead = false;
@@ -19,17 +19,34 @@ vector<pair<int, int>> Simulator::GetPath()
 
 void Simulator::StartSimulation(vector<pair<int, int>> waypoints)
 {
-	mine->ClearLambdas();
+	mine.ClearLambdas();
 	for (int i = waypoints.size() - 1; i > 0; i--) {							// waypoint #0 is a Robot !!!
-		mine->AddLambda(waypoints.at(i));
+		mine.AddLambda(waypoints.at(i));
 	}
 
 	int result;
-	for (int i = mine->GetLambdas().size() - 1; i > 0; i--) {					// waypoint #0 is a Robot !!!
-		result = MoveRobot(mine->GetLambdas().at(i));
-		if (result == -1) break;											// точно не break - подумать
+	missedLambdas.clear();
 
-		mine->GetLambdas().pop_back();
+	mine.SaveMap(cout);															// testing print to stdout
+
+	// тут, в принципе, все нормально
+	for (int i = mine.GetLambdas().size() - 1; i >= 0; i--) {					// waypoint #0 is a Robot !!!
+		MakeSnapshot();
+
+		// тестовый вывод карты в консоль
+		//cout << "Saved global snapshot:" << endl;
+		//snapshot.back().SaveMap(cout);
+
+		result = MoveRobot(mine.GetLambdas().at(i));
+		if (result == -1) {														// точно не break - подумать
+			LoadSnapshot();
+			// тестовый вывод карты в консоль
+			//cout << "Loaded global snapshot:" << endl;
+			//mine.SaveMap(cout);
+			missedLambdas.push_back(mine.GetLambdas().at(i));
+		}
+
+		mine.PopBackLambda();
 	}
 }
 
@@ -37,80 +54,81 @@ void Simulator::StartSimulation(vector<pair<int, int>> waypoints)
 void Simulator::UpdateMap()
 {
 	// Creating new state to record changes on the map
-	char ** newState = new char* [mine->GetHeight()];
-	for (int i = 0; i < mine->GetHeight(); i++) {
-		newState[i] = new char [mine->GetWidth()];
-		for (int j = 0; j < mine->GetWidth(); j++) {
+	char ** newState = new char* [mine.GetHeight()];
+	for (int i = 0; i < mine.GetHeight(); i++) {
+		newState[i] = new char [mine.GetWidth()];
+		for (int j = 0; j < mine.GetWidth(); j++) {
 			newState[i][j] = '#';
 		}
 	}
 	
-	for (int i = 1; i < mine->GetHeight() - 1; i++) {
-		for (int j = 1; j < mine->GetWidth() - 1; j++) {
+	for (int i = 1; i < mine.GetHeight() - 1; i++) {
+		for (int j = 1; j < mine.GetWidth() - 1; j++) {
 			// If (x; y) contains a Rock, and (x; y-1) is Empty:
 			// (x; y) is updated to Empty, (x; y-1) is updated to Rock.
-			if (mine->GetMap()[i][j] == '*' && mine->GetMap()[i + 1][j] == ' ') {
+			if (mine.GetMap()[i][j] == '*' && mine.GetMap()[i + 1][j] == ' ') {
 				newState[i][j] = ' ';
 				newState[i + 1][j] = '*';
-				if (mine->GetMap()[i + 2][j] == 'R') robotIsDead = true;
+				if (mine.GetMap()[i + 2][j] == 'R') robotIsDead = true;
 			}
 			// If (x; y) contains a Rock, (x; y-1) contains a Rock, (x+1; y) is Empty and (x+1; y-1) is Empty:
 			// (x; y) is updated to Empty, (x+1; y-1) is updated to Rock.
-			else if (mine->GetMap()[i][j] == '*' && mine->GetMap()[i + 1][j] == '*'
-				&& mine->GetMap()[i][j + 1] == ' ' && mine->GetMap()[i + 1][j + 1] == ' ') {
+			else if (mine.GetMap()[i][j] == '*' && mine.GetMap()[i + 1][j] == '*'
+				&& mine.GetMap()[i][j + 1] == ' ' && mine.GetMap()[i + 1][j + 1] == ' ') {
 					newState[i][j] = ' ';
 					newState[i + 1][j + 1] = '*';
-					if (mine->GetMap()[i + 2][j + 1] == 'R') robotIsDead = true;
+					if (mine.GetMap()[i + 2][j + 1] == 'R') robotIsDead = true;
 			}
 			// If (x; y) contains a Rock, (x; y-1) contains a Rock, either (x+1; y) is not Empty
 			// or (x+1; y-1) is not Empty, (x-1; y) is Empty and (x-1; y-1) is Empty:
 			// (x; y) is updated to Empty, (x-1; y-1) is updated to Rock.
-			else if (mine->GetMap()[i][j] == '*' && mine->GetMap()[i + 1][j] == '*'
-				&& (mine->GetMap()[i][j + 1] != ' ' || mine->GetMap()[i + 1][j + 1] != ' ')
-				&& mine->GetMap()[i][j - 1] == ' ' && mine->GetMap()[i + 1][j - 1] == ' ') {
+			else if (mine.GetMap()[i][j] == '*' && mine.GetMap()[i + 1][j] == '*'
+				&& (mine.GetMap()[i][j + 1] != ' ' || mine.GetMap()[i + 1][j + 1] != ' ')
+				&& mine.GetMap()[i][j - 1] == ' ' && mine.GetMap()[i + 1][j - 1] == ' ') {
 					newState[i][j] = ' ';
 					newState[i + 1][j - 1] = '*';
-					if (mine->GetMap()[i + 2][j - 1] == 'R') robotIsDead = true;
+					if (mine.GetMap()[i + 2][j - 1] == 'R') robotIsDead = true;
 			}
 			// If (x; y) contains a Rock, (x; y-1) contains a Lambda, (x+1; y) is Empty and (x+1; y-1) is Empty:
 			// (x; y) is updated to Empty, (x+1; y-1) is updated to Rock.
-			else if (mine->GetMap()[i][j] == '*' && mine->GetMap()[i + 1][j] == '\\'
-				&& mine->GetMap()[i][j + 1] == ' ' && mine->GetMap()[i + 1][j + 1] == ' ') {
+			else if (mine.GetMap()[i][j] == '*' && mine.GetMap()[i + 1][j] == '\\'
+				&& mine.GetMap()[i][j + 1] == ' ' && mine.GetMap()[i + 1][j + 1] == ' ') {
 					newState[i][j] = ' ';
 					newState[i + 1][j + 1] = '*';
-					if (mine->GetMap()[i + 2][j + 1] == 'R') robotIsDead = true;
+					if (mine.GetMap()[i + 2][j + 1] == 'R') robotIsDead = true;
 			}
 			// In all other cases, (x; y) remains unchanged.
 		}
 	}
 	// If (x; y) contains a Closed Lambda Lift, and there are no Lambdas remaining:
 	// (x; y) is updated to Open Lambda Lift.
-	if (mine->GetLambdas().empty()) {
-		mine->SetLiftState(true);
-		newState[mine->GetLift().first][mine->GetLift().second] = 'O';
+	if (mine.GetLambdas().size() == 1 && mine.GetLambdas().back() == mine.GetLift() && missedLambdas.empty()) {
+		mine.SetLiftState(true);
+		newState[mine.GetLift().first][mine.GetLift().second] = 'O';
 	}
 
 	// Rewriting old map according to the new state
-	for (int i = 0; i < mine->GetHeight(); i++) {
-		for (int j = 0; j < mine->GetWidth(); j++) {
-			if (newState[i][j] != '#') mine->GetMap()[i][j] = newState[i][j];
+	for (int i = 0; i < mine.GetHeight(); i++) {
+		for (int j = 0; j < mine.GetWidth(); j++) {
+			if (newState[i][j] != '#') mine.GetMap()[i][j] = newState[i][j];
 		}
 	}
 
 	// Freeing memory
-	for (int i = 0; i < mine->GetHeight(); i++)
+	for (int i = 0; i < mine.GetHeight(); i++)
 		delete [] newState[i];
 }
 
-int Simulator::MoveRobot(pair<int, int> target)
-{
 
 																// Использовать А*, модифицированную для учета динамических событий в шахте.
 																// Для начала - реагирующую на смерть робота
+int Simulator::MoveRobot(pair<int, int> target) {
 	int time = 0;
 	const int infinity = 1000000;
-	int startX = mine->GetRobot().first;
-	int startY = mine->GetRobot().second;
+	int snapshotCtr = 0;
+
+	int startX = mine.GetRobot().first;
+	int startY = mine.GetRobot().second;
 
 
 
@@ -118,27 +136,43 @@ int Simulator::MoveRobot(pair<int, int> target)
 	int result = 0;
 	const int nonexistent = 0, found = 1;		// path-related constants
 	const int inOpenList = 1, inClosedList = 2;	// lists-related constants
-	int parentX, parentY, Gcost, index;
+	int parentX, parentY;
 	int ** whichList;			// used to record whether a cell is on the open list or on the closed list.
 	pair<int, int> ** parent;	// used to record parent of each cage
 	OpenListItem * openList;	// array holding open list items, which is maintained as a binary heap.
 	int numberOfOpenListItems;
 
+// ****************************
+	Field ** cellsnapshot;
+
+// ****************************
+
 // 1. Allocate memory and reset variables
 
-	whichList = new int* [mine->GetHeight() + 1];
-	for (int i = 0; i < mine->GetHeight(); i++) {
-		whichList[i] = new int [mine->GetWidth() + 1];
-		for (int j = 0; j < mine->GetWidth(); j++)
+	whichList = new int* [mine.GetHeight() + 1];
+	for (int i = 0; i < mine.GetHeight(); i++) {
+		whichList[i] = new int [mine.GetWidth() + 1];
+		for (int j = 0; j < mine.GetWidth(); j++)
 			whichList[i][j] = 0;
 	}
 
-	parent = new pair<int, int>* [mine->GetHeight() + 1];
-	for (int i = 0; i < mine->GetHeight(); i++) {
-		parent[i] = new pair<int, int> [mine->GetWidth() + 1];
+	parent = new pair<int, int>* [mine.GetHeight() + 1];
+	for (int i = 0; i < mine.GetHeight(); i++) {
+		parent[i] = new pair<int, int> [mine.GetWidth() + 1];
 	}
 
-	openList = new OpenListItem [mine->GetWidth()*mine->GetHeight()+2];
+	openList = new OpenListItem [mine.GetWidth()*mine.GetHeight()+2];
+
+
+// ****************************
+	
+	cellsnapshot = new Field* [mine.GetHeight() + 1];
+	for (int i = 0; i < mine.GetHeight(); i++) {
+		cellsnapshot[i] = new Field [mine.GetWidth() + 1];
+	}
+	
+// ****************************
+
 
 // 2. Add the starting cell to the open list.
 
@@ -146,6 +180,15 @@ int Simulator::MoveRobot(pair<int, int> target)
 	openList[1].SetX(startX);	// assign it as the top item in the binary heap
 	openList[1].SetY(startY);
 	openList[1].SetGcost(0);	// reset starting cell's G value to 0
+	parent[startX][startY] = pair<int, int> (startX, startY);
+
+
+// ****************************
+
+	cellsnapshot[startX][startY] = mine;
+	
+// ****************************
+
 
 // 3. Do it until the path is found or recognized as nonexistent.
 
@@ -154,102 +197,112 @@ int Simulator::MoveRobot(pair<int, int> target)
 // 3.1. If the open list is not empty, take the first cell off of the list (i.e. the lowest F cost cell).
 
 		if (numberOfOpenListItems != 0) {
-// ***************************
-			if (openList[1].GetHcost() == infinity) {
-				result = nonexistent;
-				break;
-			}
-
-			MakeSnapshot();
-			
-			Step(openList[1].GetX(), openList[1].GetY());
-			UpdateMap();
-			time++;
-
-			if (robotIsDead) {
-				openList[1].SetHcost(infinity);
-				SinkItemInBinaryHeap(openList, numberOfOpenListItems, 1);
-				LoadSnapshot();
-				time--;
-			}
-// ***************************
 
 			// record cell coordinates and Gcost of the item as parent for adjacent cells (see below)
 			parentX = openList[1].GetX();
 			parentY = openList[1].GetY();
-			Gcost = openList[1].GetGcost();
+
+
+
+// ***************************
+			//if (openList[1].GetHcost() == infinity) {
+			//	SinkItemInBinaryHeap(openList, numberOfOpenListItems, 1);
+			//	if (openList[1].GetHcost() == infinity) {
+			//		result = nonexistent;
+			//		break;
+			//	}
+			//}
+
+			// Если это не первая клетка пути
+			if (openList[1].GetX() != startX || openList[1].GetY() != startY) {
+				// загружаем состояние карты на тот момент, когда робот доходит до клетки, родительской к этой клетке
+				mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
+				// делаем шаг и апдейтим карту
+				Step(openList[1].GetX(), openList[1].GetY());
+				UpdateMap();
+
+				// тестовый вывод карты в консоль
+				//mine.SaveMap(cout);																		// testing print to stdout
+			}
+
+			// Шаг сделан - можно проверять получившуюся ситуацию
+			// именно тут надо вызывать функции проверки варианта смерти робота, по идее
+
+			// для начала я рассмотрел случай, когда робот умирает (флаг robotIsDead выстанавливается в результате апдейта карты)
+			// это просто простейший алгоритм, его надо будет изменять, добавляя эвристику
+			if (robotIsDead) {
+				// если эта клетка - наша цель, то не нужны нам такие цели - возвращаемся назад и отбрасываем эту лямбду
+				if (openList[1].GetX() == target.first && openList[1].GetY() == target.second) {
+					result = nonexistent;
+					break;
+				}
+
+				// иначе - ставим ей удаленность до цели пути 1000000 и перемещаем ее в закрытый лист - не лучший вариант
+				openList[1].SetHcost(infinity);
+				whichList[parentX][parentY] = inClosedList;						// add item to the closed list
+				DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems);	// delete this item from the open list
+				mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
+
+				// тестовый вывод карты в консоль
+				//cout << "Back:" << endl;
+				//mine.SaveMap(cout);																		// testing print to stdout
+
+				robotIsDead = false;
+				continue;
+			}
+
+			if (openList[1].GetX() == target.first && openList[1].GetY() == target.second) {
+				result = found;
+				break;
+			}
+
+			cellsnapshot[parentX][parentY] = mine;
+
+// ***************************
 
 			whichList[parentX][parentY] = inClosedList;						// add item to the closed list
 			DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems);	// delete this item from the open list
 
-// 4.2. Check the adjacent squares and add them to the open list
+// 3.2. Check the adjacent squares and add them to the open list
 
-			for (int x = parentX - 1; x <= parentX + 1; x++) {
-				for (int y = parentY - 1; y <= parentY + 1; y++) {
-					if ((x != parentX && y != parentY) || (x == parentX && y == parentY))
-						continue;
+			AddAdjacentCellsToOpenList(openList, numberOfOpenListItems, parentX, parentY,
+									   whichList, parent, target);
 
-					// If not off the map (avoiding array-out-of-bounds errors)
-					if (x != -1 && y != -1 && x != mine->GetHeight() && y != mine->GetWidth()) {
-						
-						// If not already on the closed list (items on the closed list have already been considered and can now be ignored).
-						if (whichList[x][y] != inClosedList) {
-							// If not a wall/obstacle square.
-							if (mine->isWalkable(x, y)) {
-								// If cell is not already on the open list, add it to the open list.
-								if (whichList[x][y] != inOpenList) {
-									numberOfOpenListItems++;					// increment number of items in the heap
-									openList[numberOfOpenListItems].SetX(x);	// record the x and y coordinates of the new item
-									openList[numberOfOpenListItems].SetY(y);
+/* Эта штука еще не работает!
 
-									// Figure out its G cost
-									openList[numberOfOpenListItems].SetGcost(Gcost + 1);
-									
-									// Figure out its H and F costs and parent
-									parent[x][y].first = parentX;							// change the cell's parent
-									parent[x][y].second = parentY;
-									// F cost includes H cost except when we want to use A* algorithm as Dijkstra's algorithm
-									openList[numberOfOpenListItems].SetHcost( (abs(x - target.first) + abs(y - target.second)) );
-									openList[numberOfOpenListItems].CalculateFcost();	// update the F cost
-									
-									// Move the new open list item to the proper place in the binary heap.
-									BubbleItemInBinaryHeap(openList, numberOfOpenListItems);
-
-									whichList[x][y] = inOpenList;	// Change whichList value.
-								}
-								// If cell is already on the open list, choose better G and F costs.
-								else {
-									index = GetItemIndexFromBinaryHeapByCoord(openList, numberOfOpenListItems, x, y);
-									Gcost += 1;	// Figure out the G cost of this possible new path
-
-									// If this path is shorter (G cost is lower) then change the parent cell, G cost and F cost. 		
-									if (Gcost < openList[index].GetGcost()) {
-										parent[x][y].first = parentX;			// change the cell's parent
-										parent[x][y].second = parentY;
-										openList[index].SetGcost(Gcost);	// change the G cost
-										openList[index].CalculateFcost();	// update the F cost
-										BubbleItemInBinaryHeap(openList, index);		// update cell's position on the open list
-									}
-								}	
-							}
+			// по идее, после апдейта карты надо перебрать все клетки из закрытого списка
+			// и проверить все клетки рядом с ними - все ли находятся в openList или в закрытом списке
+			// если не все, то добавить соответствующие клетки в openList
+			//
+			// также надо исключить из открытого списка клетки, которые оказались заняты
+			int wtf;
+			for (int i = 0; i < mine.GetHeight(); i++) {
+				for (int j = 0; j < mine.GetWidth(); j++) {
+					if (whichList[i][j] == inClosedList) {
+						// добавляем освободившиеся клетки
+						AddAdjacentCellsToOpenList(openList, numberOfOpenListItems, i, j,
+													whichList, parent, target);
+					} else if (whichList[i][j] == inOpenList) {
+						// удаляем заблокированные клетки
+						if (!mine.isWalkable(i, j)) {
+							int index = GetItemIndexFromBinaryHeapByCoord(openList, numberOfOpenListItems, i, j);
+							openList[index].SetCosts(-1, -1);
+							BubbleItemInBinaryHeap(openList, index);
+							DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems);
 						}
 					}
 				}
 			}
+*/
+
 		} else {
 
-// 4.3. If open list is empty then there is no path.	
+// 3.3. If open list is empty then there is no path.	
 		
 			result = nonexistent;
 			break;
 		}  
 
-// 5. If target cell is added to open list then path has been found.
-
-		if (whichList[target.first][target.second] == inOpenList) {
-			result = found;
-			break;
-		}
 	}	// end while
 
 // 6. Save the path if it exists.
@@ -282,10 +335,11 @@ int Simulator::MoveRobot(pair<int, int> target)
 
 // 7. Freeing used memory
 
-	for (int i = 0; i < mine->GetHeight(); i++)
+	for (int i = 0; i < mine.GetHeight(); i++) {
 		delete [] whichList[i];
-	for (int i = 0; i < mine->GetHeight(); i++)
 		delete [] parent[i];
+		delete [] cellsnapshot[i];
+	}
 	delete [] openList;
 
 	return 0;
@@ -294,25 +348,96 @@ int Simulator::MoveRobot(pair<int, int> target)
 // Description: Moves robot to the target cell
 void Simulator::Step(int x, int y)
 {
-	int xold = mine->GetRobot().first;
-	int yold = mine->GetRobot().second;
-	mine->GetMap()[x][y] = 'R';
-	mine->GetMap()[xold][yold] = ' ';
-	mine->SetRobot(x, y);
+	int xold = mine.GetRobot().first;
+	int yold = mine.GetRobot().second;
+
+	// If there is a stone in this cage
+	if (mine.GetMap()[x][y] == '*') {
+		if (x == xold && y - 1 == yold) {				// then, if robot is to the left of the stone
+			mine.GetMap()[x][y + 1] = '*';
+		} else if (x == xold && y + 1 == yold) {		// otherwise, if robot is to the right of the stone
+			mine.GetMap()[x][y - 1] = '*';
+		}
+	}
+
+	mine.GetMap()[xold][yold] = ' ';
+	mine.GetMap()[x][y] = 'R';
+	mine.SetRobot(x, y);
 }
 
 // Description: Saves current mine state
 void Simulator::MakeSnapshot()
 {
-	Field f = *mine;
-	snapshot.push_back(f);
+	snapshot.push_back(mine);
 }
 
 // Description: Restores last mine state
 void Simulator::LoadSnapshot()
 {
-	*mine = snapshot.back();
+	mine = snapshot.back();
 	snapshot.pop_back();
+}
+
+
+void Simulator::AddAdjacentCellsToOpenList(OpenListItem * openList, int & numberOfOpenListItems,
+	int parentX, int parentY, int ** whichList, pair<int, int> ** parent, pair<int, int> target)
+{
+	const int inOpenList = 1, inClosedList = 2;	// lists-related constants
+	int Gcost = openList[1].GetGcost();
+	int index;
+
+	for (int x = parentX - 1; x <= parentX + 1; x++) {
+		for (int y = parentY - 1; y <= parentY + 1; y++) {
+			if ((x != parentX && y != parentY) || (x == parentX && y == parentY))
+				continue;
+
+			// If not off the map (avoiding array-out-of-bounds errors)
+			if (x != -1 && y != -1 && x != mine.GetHeight() && y != mine.GetWidth()) {
+						
+				// If not already on the closed list (items on the closed list have already been considered and can now be ignored).
+				if (whichList[x][y] != inClosedList) {
+					// If not a wall/obstacle square.
+					if (mine.isWalkable(x, y)) {
+						// If cell is not already on the open list, add it to the open list.
+						if (whichList[x][y] != inOpenList) {
+							numberOfOpenListItems++;					// increment number of items in the heap
+							openList[numberOfOpenListItems].SetX(x);	// record the x and y coordinates of the new item
+							openList[numberOfOpenListItems].SetY(y);
+
+							// Figure out its G cost
+							openList[numberOfOpenListItems].SetGcost(Gcost + 1);
+									
+							// Figure out its H and F costs and parent
+							parent[x][y].first = parentX;							// change the cell's parent
+							parent[x][y].second = parentY;
+							// F cost includes H cost except when we want to use A* algorithm as Dijkstra's algorithm
+							openList[numberOfOpenListItems].SetHcost( (abs(x - target.first) + abs(y - target.second)) );
+							openList[numberOfOpenListItems].CalculateFcost();	// update the F cost
+									
+							// Move the new open list item to the proper place in the binary heap.
+							BubbleItemInBinaryHeap(openList, numberOfOpenListItems);
+
+							whichList[x][y] = inOpenList;	// Change whichList value.
+						}
+						// If cell is already on the open list, choose better G and F costs.
+						else {
+							index = GetItemIndexFromBinaryHeapByCoord(openList, numberOfOpenListItems, x, y);
+							Gcost += 1;	// Figure out the G cost of this possible new path
+
+							// If this path is shorter (G cost is lower) then change the parent cell, G cost and F cost. 		
+							if (Gcost < openList[index].GetGcost()) {
+								parent[x][y].first = parentX;			// change the cell's parent
+								parent[x][y].second = parentY;
+								openList[index].SetGcost(Gcost);	// change the G cost
+								openList[index].CalculateFcost();	// update the F cost
+								BubbleItemInBinaryHeap(openList, index);		// update cell's position on the open list
+							}
+						}	
+					}
+				}
+			}
+		}
+	}
 }
 
 

@@ -69,12 +69,24 @@ void TSPSolver::Solve(const int & iterations)
 	//SetMatrixes();				// initialize distance and path matrixes
 	CreateNearestNeighbourTour();	// create tour using NN algorithm
 
+	for (int i = 0; i < tour.size(); i++) {
+		cout << tour[i] << " ";
+	}
+	cout << endl;
+
+
 	for (int i = 0; i < iterations; i++)
 		StartTwoOpt();					// optimize the found tour
+
+	for (int i = 0; i < tour.size(); i++) {
+		cout << tour[i] << " ";
+	}
+	cout << endl;
 
 	//SetTourPath();					// build result path as sequence of cells's coordinates
 
 
+	if (nodes.size() == 0) return;
 
 	vector<pair<int, int>> tmp;
 	for (int i = 0; i < tour.size(); i++) {

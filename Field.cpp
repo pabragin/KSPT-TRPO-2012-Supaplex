@@ -28,9 +28,9 @@ Field::Field(const Field & field)
 
 Field::~Field(void)
 {
-	if (map)
-		for (int i = 0; i < mapHeight; i++)
-			delete [] map[i];
+	//if (map)
+	//	for (int i = 0; i < mapHeight; i++)
+	//		delete [] map[i];
 }
 
 // Description: Loads map from file and fills Field's fields =)
@@ -87,7 +87,7 @@ int Field::LoadMap(char * file)
 }
 
 // Description: Prints map using the specified stream
-void Field::saveMap(ostream &sout)
+void Field::SaveMap(ostream &sout)
 {
 	sout << endl;
 	for (int i = 0; i < mapHeight; i++) {
@@ -111,18 +111,6 @@ void Field::SetLiftState(bool isOpen)
 	liftIsOpen = isOpen;
 }
 
-void Field::ReorderLambdas(vector<int> order)
-{
-	//vector<pair<int, int>> tmp;
-	//for (int i = 0; i < order.size(); i++) {
-	//	tmp.push_back(lambdas.at(order.at(i)));
-	//}
-	//lambdas.clear();
-	//for (int i = 0; i < tmp.size(); i++) {
-	//	lambdas.push_back(tmp.at(i));
-	//}
-}
-
 void Field::ClearLambdas()
 {
 	lambdas.clear();
@@ -131,6 +119,11 @@ void Field::ClearLambdas()
 void Field::AddLambda(pair<int, int> lambda)
 {
 	lambdas.push_back(lambda);
+}
+
+void Field::PopBackLambda()
+{
+	lambdas.pop_back();
 }
 
 // Description: Returns map width
@@ -184,14 +177,35 @@ bool Field::isWalkable(int x, int y)																						// TBD: add some euris
 	// if there is a stone in this cage and there is something in next cage
 	if (map[x][y] == '*') {											// If there is a stone in this cage:
 		if (x == robot.first && y - 1 == robot.second) {			// then, if robot is to the left of a cage
-			if (map[x][y + 1] != ' ') return false;					// then robot fails if the right cage near stone isn't empty
+			if (map[x][y + 1] == ' ') return true;					// then robot succeeds if the right cage near stone is empty
 		} else if (x == robot.first && y + 1 == robot.second) {		// otherwise, if robot is to the right of a cage
-			if (map[x][y - 1] != ' ') return false;					// then robot fails if the left cage near stone isn't empty.
-		} else return true;											// Robot succeeds in all other cases (i.e. next cage is empty).
+			if (map[x][y - 1] == ' ') return true;					// then robot succeeds if the left cage near stone is empty.
+		}
+		return false;												// Robot fails in all other cases (i.e. next cage isn't empty).
 	}
 	// If there is a closed lift, then robot fails
 	if (map[x][y] == 'L') return false;
 	// Robot succeeds in all other cases.
 	// I.e. there is an earth, lambda or an open lift in the cage or the cage is empty.
 	return true;
+}
+
+Field Field::operator = (const Field & field)
+{
+	mapWidth = field.mapWidth;
+	mapHeight = field.mapHeight;
+	robot = field.robot;
+	lambdas = field.lambdas;
+	lift = field.lift;
+	liftIsOpen = field.liftIsOpen;
+
+	map = new char * [field.mapHeight];
+	for (int i = 0; i < field.mapHeight; i++) {
+		map[i] = new char [field.mapWidth];
+		for (int j = 0; j < field.mapWidth; j++) {
+			map[i][j] = field.map[i][j];
+		}
+	}
+
+	return *this;
 }
