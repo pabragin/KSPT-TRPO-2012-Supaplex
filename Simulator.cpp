@@ -32,7 +32,6 @@ void Simulator::StartSimulation(vector<pair<int, int>> waypoints)
 
 	//mine.SaveMap(cout);														// testing print to stdout
 
-	// ÚÛÚ, ‚ ÔËÌˆËÔÂ, ‚ÒÂ ÌÓÏ‡Î¸ÌÓ
 	for (int i = mine.GetLambdas().size() - 1; i >= 0; i--) {					// waypoint #0 is a Robot !!!
 		if (FindUnexpectedLambda(i)) {
 			mine.PopBackLambda();
@@ -41,15 +40,14 @@ void Simulator::StartSimulation(vector<pair<int, int>> waypoints)
 
 		MakeSnapshot();
 
-		// ÚÂÒÚÓ‚˚È ‚˚‚Ó‰ Í‡Ú˚ ‚ ÍÓÌÒÓÎ¸
 		//cout << "Saved global snapshot:" << endl;
 		//snapshot.back().SaveMap(cout);
 
 		result = MoveRobot(mine.GetLambdas().at(i));
 
-		if (result == -1) {														// ÚÓ˜ÌÓ ÌÂ break - ÔÓ‰ÛÏ‡Ú¸
+		if (result == -1) {
 			LoadSnapshot();
-			// ÚÂÒÚÓ‚˚È ‚˚‚Ó‰ Í‡Ú˚ ‚ ÍÓÌÒÓÎ¸
+
 			//cout << "Loaded global snapshot:" << endl;
 			//mine.SaveMap(cout);
 
@@ -141,6 +139,7 @@ void Simulator::UpdateMap()
 		delete [] newState[i];
 }
 
+
 bool Simulator::IsLiftBlocked() { //is lift blocked? lets see (will return true or false)
     
     int rob_x = mine.GetRobot().first;     //some varibles
@@ -174,9 +173,10 @@ bool Simulator::IsLiftBlocked() { //is lift blocked? lets see (will return true 
     else {
         return false;
     }
-}																// »ÒÔÓÎ¸ÁÓ‚‡Ú¸ ¿*, ÏÓ‰ËÙËˆËÓ‚‡ÌÌÛ˛ ‰Îˇ Û˜ÂÚ‡ ‰ËÌ‡ÏË˜ÂÒÍËı ÒÓ·˚ÚËÈ ‚ ¯‡ıÚÂ.
-																// ƒÎˇ Ì‡˜‡Î‡ - Â‡„ËÛ˛˘Û˛ Ì‡ ÒÏÂÚ¸ Ó·ÓÚ‡
+}
 
+// Using A star algorithm modified for taking care about dynamic changes on map
+// At the begining - add reaction on the robot death
 int Simulator::MoveRobot(pair<int, int> target) {
 
 	const int infinity = 1000000;	// infinity Hcost of the cell where robot dies
@@ -263,59 +263,46 @@ int Simulator::MoveRobot(pair<int, int> target) {
 
 
 // ***************************
-			//if (openList[1].GetHcost() == infinity) {
-			//	SinkItemInBinaryHeap(openList, numberOfOpenListItems, 1);
-			//	if (openList[1].GetHcost() == infinity) {
-			//		result = nonexistent;
-			//		break;
-			//	}
-			//}
 
-			// ≈ÒÎË ˝ÚÓ ÌÂ ÔÂ‚‡ˇ ÍÎÂÚÍ‡ ÔÛÚË
+			// If it is not the start cell
 			if (openList[1].GetX() != startX || openList[1].GetY() != startY) {
-				// Á‡„ÛÊ‡ÂÏ ÒÓÒÚÓˇÌËÂ Í‡Ú˚ Ì‡ ÚÓÚ ÏÓÏÂÌÚ, ÍÓ„‰‡ Ó·ÓÚ ‰ÓıÓ‰ËÚ ‰Ó ÍÎÂÚÍË, Ó‰ËÚÂÎ¸ÒÍÓÈ Í ˝ÚÓÈ ÍÎÂÚÍÂ
+				// loading field state relating to this cell's parent (from which robot makes a step to this cell)
 				mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
-				// ‰ÂÎ‡ÂÏ ¯‡„ Ë ‡Ô‰ÂÈÚËÏ Í‡ÚÛ
+				// making a step and updating map
 				bool stoneMoved = Step(openList[1].GetX(), openList[1].GetY());
-               // if lift is blicked? Checking only then stone is moved
-                if(stoneMoved){
-                if (IsLiftBlocked()) {
-                    openList[1].SetHcost(infinity);
-                     whichList[parentX][parentY] = inClosedList;                   // add item to the closed list
-                     DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems); // delete this item from the open list
-                     mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
-                     continue;
-                    }
+				if(stoneMoved){
+					if (IsLiftBlocked()) {
+						openList[1].SetHcost(infinity);
+						whichList[parentX][parentY] = inClosedList;                   // add item to the closed list
+						DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems); // delete this item from the open list
+						mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
+						continue;
+					}
 			    }
-                UpdateMap();
+				UpdateMap();
 
-				// ÚÂÒÚÓ‚˚È ‚˚‚Ó‰ Í‡Ú˚ ‚ ÍÓÌÒÓÎ¸
-				mine.SaveMap(cout);																		// testing print to stdout
+				//mine.SaveMap(cout);																		// testing print to stdout
 			}
 
-			// ÿ‡„ Ò‰ÂÎ‡Ì - ÏÓÊÌÓ ÔÓ‚ÂˇÚ¸ ÔÓÎÛ˜Ë‚¯Û˛Òˇ ÒËÚÛ‡ˆË˛
-			// ËÏÂÌÌÓ ÚÛÚ Ì‡‰Ó ‚˚Á˚‚‡Ú¸ ÙÛÌÍˆËË ÔÓ‚ÂÍË ‚‡Ë‡ÌÚ‡ ÒÏÂÚË Ó·ÓÚ‡, ÔÓ Ë‰ÂÂ
-
-			// ‰Îˇ Ì‡˜‡Î‡ ˇ ‡ÒÒÏÓÚÂÎ ÒÎÛ˜‡È, ÍÓ„‰‡ Ó·ÓÚ ÛÏË‡ÂÚ (ÙÎ‡„ robotIsDead ‚˚ÒÚ‡Ì‡‚ÎË‚‡ÂÚÒˇ ‚ ÂÁÛÎ¸Ú‡ÚÂ ‡Ô‰ÂÈÚ‡ Í‡Ú˚)
-			// ˝ÚÓ ÔÓÒÚÓ ÔÓÒÚÂÈ¯ËÈ ‡Î„ÓËÚÏ, Â„Ó Ì‡‰Ó ·Û‰ÂÚ ËÁÏÂÌˇÚ¸, ‰Ó·‡‚Îˇˇ ˝‚ËÒÚËÍÛ
+			// Step is made - we can check new position
+			// 
+			// Cheking robot's death after update (this is a simple algorithm, need to add more euristic methods)
 			if (robotIsDead) {
-				// ÂÒÎË ˝Ú‡ ÍÎÂÚÍ‡ - Ì‡¯‡ ˆÂÎ¸, ÚÓ ÌÂ ÌÛÊÌ˚ Ì‡Ï Ú‡ÍËÂ ˆÂÎË - ‚ÓÁ‚‡˘‡ÂÏÒˇ Ì‡Á‡‰ Ë ÓÚ·‡Ò˚‚‡ÂÏ ˝ÚÛ ÎˇÏ·‰Û
 
+				// If this cell is target cell, then we refuse it at all and roll back
 				if (openList[1].GetX() == target.first && openList[1].GetY() == target.second) {
 					result = nonexistent;
 					break;
 				}
 
-				// ËÌ‡˜Â - ÒÚ‡‚ËÏ ÂÈ Û‰‡ÎÂÌÌÓÒÚ¸ ‰Ó ˆÂÎË ÔÛÚË 1000000 Ë ÔÂÂÏÂ˘‡ÂÏ ÂÂ ‚ Á‡Í˚Ú˚È ÎËÒÚ - ÌÂ ÎÛ˜¯ËÈ ‚‡Ë‡ÌÚ
-
+				// If it is not our target cell, set infinity H cost and transfer item to the closed list - it is not the best rule
 				openList[1].SetHcost(infinity);
 				whichList[parentX][parentY] = inClosedList;						// add item to the closed list
 				numberOfClosedListItems++;
 				closedList[numberOfClosedListItems] = openList[1];
 				DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems);	// delete this item from the open list
 
-
-				// ÚÂÒÚÓ‚˚È ‚˚‚Ó‰ Í‡Ú˚ ‚ ÍÓÌÒÓÎ¸
+				mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];	// load snapshot
 
 				//cout << "Back:" << endl;
                 //mine.SaveMap(cout);																		// testing print to stdout
@@ -346,33 +333,6 @@ int Simulator::MoveRobot(pair<int, int> target) {
 			//cout << numberOfOpenListItems << endl;
 			//for (int k = 1; k < numberOfOpenListItems + 1; k++)
 			//	cout << openList[k].GetX() << ":" << openList[k].GetY() << " F: " << openList[k].GetFcost() << " G: " << openList[k].GetGcost() << endl;
-
-/* ›Ú‡ ¯ÚÛÍ‡ Â˘Â ÌÂ ‡·ÓÚ‡ÂÚ!
-
-			// ÔÓ Ë‰ÂÂ, ÔÓÒÎÂ ‡Ô‰ÂÈÚ‡ Í‡Ú˚ Ì‡‰Ó ÔÂÂ·‡Ú¸ ‚ÒÂ ÍÎÂÚÍË ËÁ Á‡Í˚ÚÓ„Ó ÒÔËÒÍ‡
-			// Ë ÔÓ‚ÂËÚ¸ ‚ÒÂ ÍÎÂÚÍË ˇ‰ÓÏ Ò ÌËÏË - ‚ÒÂ ÎË Ì‡ıÓ‰ˇÚÒˇ ‚ openList ËÎË ‚ Á‡Í˚ÚÓÏ ÒÔËÒÍÂ
-			// ÂÒÎË ÌÂ ‚ÒÂ, ÚÓ ‰Ó·‡‚ËÚ¸ ÒÓÓÚ‚ÂÚÒÚ‚Û˛˘ËÂ ÍÎÂÚÍË ‚ openList
-			//
-			// Ú‡ÍÊÂ Ì‡‰Ó ËÒÍÎ˛˜ËÚ¸ ËÁ ÓÚÍ˚ÚÓ„Ó ÒÔËÒÍ‡ ÍÎÂÚÍË, ÍÓÚÓ˚Â ÓÍ‡Á‡ÎËÒ¸ Á‡ÌˇÚ˚
-			int wtf;
-			for (int i = 0; i < mine.GetHeight(); i++) {
-				for (int j = 0; j < mine.GetWidth(); j++) {
-					if (whichList[i][j] == inClosedList) {
-						// ‰Ó·‡‚ÎˇÂÏ ÓÒ‚Ó·Ó‰Ë‚¯ËÂÒˇ ÍÎÂÚÍË
-						AddAdjacentCellsToOpenList(openList, numberOfOpenListItems, i, j,
-													whichList, parent, target);
-					} else if (whichList[i][j] == inOpenList) {
-						// Û‰‡ÎˇÂÏ Á‡·ÎÓÍËÓ‚‡ÌÌ˚Â ÍÎÂÚÍË
-						if (!mine.isWalkable(i, j)) {
-							int index = GetItemIndexFromBinaryHeapByCoord(openList, numberOfOpenListItems, i, j);
-							openList[index].SetCosts(-1, -1);
-							BubbleItemInBinaryHeap(openList, index);
-							DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems);
-						}
-					}
-				}
-			}
-*/
 
 		} else {
 

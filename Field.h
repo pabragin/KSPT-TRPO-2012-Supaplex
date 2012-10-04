@@ -24,6 +24,7 @@ public:
 	void ClearLambdas();
 	void AddLambda(pair<int, int> lambda);
 	void PopBackLambda();
+	int FindLambda(pair<int, int> lambda);
 
 	int GetWidth();
 	int GetHeight();

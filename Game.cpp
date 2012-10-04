@@ -20,7 +20,8 @@ int Game::Start(char * file)
 		return -1;
 	}
 
-//	map.printMap(cout);
+	score = 0;
+	trace.clear();
 
 	return 0;
 }
@@ -33,7 +34,7 @@ void Game::Solve(const int & iterations)
 	Simulator sim(this->map);
 	sim.StartSimulation(solver.GetNodes());
 
-	ofstream fout("..//IO files//output.txt");
+	ofstream fout("..//IO files//output.txt", ios::app);
 
 	BuildPathByCoord(&sim.GetPath());
 
