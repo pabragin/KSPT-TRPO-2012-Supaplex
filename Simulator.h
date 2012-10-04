@@ -9,8 +9,7 @@ class Simulator
 
 	vector<Field> snapshot;
 	bool robotIsDead;
-    bool stoneMoved;
-    bool liftBlocked;
+
 	vector<pair<int, int>> path;
 	vector<pair<int, int>> missedLambdas;
 	vector<int> unexpectedLambdas;
