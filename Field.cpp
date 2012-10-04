@@ -40,6 +40,8 @@ int Field::LoadMap(char * file)
 	ifstream fin(file);
 	if (!fin.is_open()) return -2;
 
+	lambdas.clear();
+
 	vector<string> buf;
 	string str;
 	int width = 0;
@@ -124,6 +126,14 @@ void Field::AddLambda(pair<int, int> lambda)
 void Field::PopBackLambda()
 {
 	lambdas.pop_back();
+}
+
+int Field::FindLambda(pair<int, int> lambda)
+{
+	for (int i = 0; i < lambdas.size(); i++) {										// this is the worst method!!!
+		if (lambdas.at(i) == lambda) return i;
+	}
+	return -1;
 }
 
 // Description: Returns map width
