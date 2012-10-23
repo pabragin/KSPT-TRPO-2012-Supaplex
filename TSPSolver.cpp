@@ -19,24 +19,24 @@ TSPSolver::~TSPSolver(void)
 }
 
 // Description: Returns result path as sequence of cells's coordinates
-vector<pair<int, int>> TSPSolver::GetTourPath()
+vector<IntPair> TSPSolver::GetTourPath()
 {
 	return this->path;
 }
 
 // Description: Returns path between Start and Target nodes
-vector<pair<int, int>> TSPSolver::GetPath(const int & start, const int & target)
+vector<IntPair> TSPSolver::GetPath(const int & start, const int & target)
 {
 	// Check node's order
 	if (start < target)
-		return this->pathMatrix[pair<int, int> (start, target)];
+		return this->pathMatrix[IntPair (start, target)];
 	else {
 		// pathMatrix contains paths from A to B, where A < B.
 		// But path from A to B, where A > B, is path from B to A in reverse order.
 		// So, we need to reverse vector
 
-		vector<pair<int, int>> resultPath;
-		vector<pair<int, int>> * ptr = & this->pathMatrix[pair<int, int> (target, start)];
+		vector<IntPair> resultPath;
+		vector<IntPair> * ptr = & this->pathMatrix[IntPair (target, start)];
 		int size = ptr->size();
 		for (int i = size - 1; i >= 0; i--) {
 			resultPath.push_back(ptr->at(i));
@@ -46,7 +46,7 @@ vector<pair<int, int>> TSPSolver::GetPath(const int & start, const int & target)
 }
 
 // Description: Returns nodes
-vector<pair<int, int>> TSPSolver::GetNodes()
+vector<IntPair> TSPSolver::GetNodes()
 {
 	return this->nodes;
 }
@@ -88,12 +88,12 @@ void TSPSolver::Solve(const int & iterations)
 
 	if (nodes.size() == 0) return;
 
-	vector<pair<int, int>> tmp;
-	for (int i = 0; i < tour.size(); i++) {
+	vector<IntPair> tmp;
+	for (size_t i = 0; i < tour.size(); i++) {
 		tmp.push_back(nodes.at(tour.at(i)));
 	}
 	nodes.clear();
-	for (int i = 0; i < tmp.size(); i++) {
+	for (size_t i = 0; i < tmp.size(); i++) {
 		nodes.push_back(tmp.at(i));
 	}
 }
@@ -102,13 +102,13 @@ void TSPSolver::Solve(const int & iterations)
 void TSPSolver::SetMatrixes()
 {
 	int size = nodes.size();
-	int maxPath = mine->GetWidth()*mine->GetHeight()/sqrt(2.0); // this is the maximum possible path on this map
+	int maxPath = (int) mine->GetWidth()*mine->GetHeight()/sqrt(2.0); // this is the maximum possible path on this map
 	int dist;
-	vector<pair<int, int>> pathToNode;
+	vector<IntPair> pathToNode;
 
 	for (int i = 0; i < size - 1; i++) {
 		// Get start node coordinates
-		pair<int, int> firNode = nodes[i];
+		IntPair firNode = nodes[i];
 		int startX = firNode.first;
 		int startY = firNode.second;
 
@@ -117,11 +117,11 @@ void TSPSolver::SetMatrixes()
 			pathToNode.clear();
 
 			// Get target node coordinates
-			pair<int, int> secNode = nodes[j];
+			IntPair secNode = nodes[j];
 			int targetX = secNode.first;
 			int targetY = secNode.second;
 
-			// Map the distance to the pair of nodes between lambda node and lift node
+			// Map the distance to the IntPair of nodes between lambda node and lift node
 			// Using method allows to transform the closed graph to unclosed graph
 			// and still using closed graph's algorithms.
 			//
@@ -130,8 +130,8 @@ void TSPSolver::SetMatrixes()
 			if (j == size - 1) {
 				if (i == 0) {
 					dist = 2*maxPath;		// distance between robot and lift
-					// Map the distance to the pair of nodes
-					distMatrix[pair<int, int> (i, j)] = dist;
+					// Map the distance to the IntPair of nodes
+					distMatrix[IntPair (i, j)] = dist;
 					continue;
 				} else dist = 3*maxPath;	// distance between lambda and lift
 			}
@@ -143,10 +143,10 @@ void TSPSolver::SetMatrixes()
 				dist += pathlen;
 			} else dist += mine->GetHeight()*mine->GetWidth();													// TBD: in this case it seems better to delete lambda from list and ignore it
 
-			// Map the distance to the pair of nodes
-			distMatrix[pair<int, int> (i, j)] = dist;
-			// Map the path to the pair of nodes
-			pathMatrix[pair<int, int> (i, j)] = pathToNode;
+			// Map the distance to the IntPair of nodes
+			distMatrix[IntPair (i, j)] = dist;
+			// Map the path to the IntPair of nodes
+			pathMatrix[IntPair (i, j)] = pathToNode;
 		}
 	}
 }
@@ -154,7 +154,7 @@ void TSPSolver::SetMatrixes()
 // Description: Returns distance between two nodes
 int TSPSolver::GetDistance(const int & node1, const int & node2)
 {
-	vector<pair<int, int>> path;
+	vector<IntPair> path;
 	int start, target;
 
 	// Check node's order
@@ -166,7 +166,7 @@ int TSPSolver::GetDistance(const int & node1, const int & node2)
 		target = node1;
 	}
 
-	//path = pathMatrix[pair<int,int> (start, target)];
+	//path = pathMatrix[IntPair<int,int> (start, target)];
 
 	//if (path.empty()) {
 	//	int startX = nodes.at(start).first;
@@ -175,8 +175,8 @@ int TSPSolver::GetDistance(const int & node1, const int & node2)
 	//	int targetY = nodes.at(target).second;
 	//	path = FindPath(startX, startY, targetX, targetY);
 
-	//	// Map the path to the pair of nodes
-	//	pathMatrix[pair<int, int> (start, target)] = path;
+	//	// Map the path to the IntPair of nodes
+	//	pathMatrix[IntPair (start, target)] = path;
 	//}
 	//if (path.size() == 1 && path.back().first == -1 && path.back().second == -1) {
 	//	return -1;
@@ -261,7 +261,7 @@ int TSPSolver::GetNearestNeighbour(const int & node, set<int> & nodeSet)
 		int dist = GetDistance(node, currNode);
 		if (dist == -1) continue;
 		else if (currNode == *(--nodeSet.end())) {
-			int maxPath = mine->GetWidth()*mine->GetHeight()/sqrt(2.0); // this is the maximum possible path on the map
+			int maxPath = (int) mine->GetWidth()*mine->GetHeight()/sqrt(2.0); // this is the maximum possible path on the map
 			if (node == 0) dist = 2*maxPath;	// distance between robot and lift
 			else dist += 3*maxPath;				// distance between lambda and lift
 		}
@@ -316,15 +316,15 @@ void TSPSolver::TwoOpt(const int & startN1Index, const int & targetN1Index,
 
 
 // Description: Finds a path using A*.
-vector<pair<int, int>> TSPSolver::FindPath(int startX, int startY, int targetX, int targetY, bool useHcost)
+vector<IntPair> TSPSolver::FindPath(int startX, int startY, int targetX, int targetY, bool useHcost)
 {
-	vector<pair<int, int>> resultPath;			// vector of coordinates of cells in found path
+	vector<IntPair> resultPath;			// vector of coordinates of cells in found path
 	int path = 0;
 	const int nonexistent = 0, found = 1;		// path-related constants
 	const int inOpenList = 1, inClosedList = 2;	// lists-related constants
 	int parentX, parentY, Gcost, index;
 	int ** whichList;			// used to record whether a cell is on the open list or on the closed list.
-	pair<int, int> ** parent;	// used to record parent of each cage
+	IntPair ** parent;	// used to record parent of each cage
 	OpenListItem * openList;	// array holding open list items, which is maintained as a binary heap.
 	int numberOfOpenListItems;
 
@@ -332,13 +332,13 @@ vector<pair<int, int>> TSPSolver::FindPath(int startX, int startY, int targetX, 
 
 	// If start and target cells are the same cell
 	if (startX == targetX && startY == targetY) {
-		resultPath.push_back(pair<int, int> (startX, startY));
+		resultPath.push_back(IntPair (startX, startY));
 		return resultPath;
 	}
 
 	// If target cell is unwalkable
 	if (mine->GetMap()[targetX][targetY] == '#') {
-		resultPath.push_back(pair<int, int> (-1, -1));	// its better than return an empty vector
+		resultPath.push_back(IntPair (-1, -1));	// its better than return an empty vector
 		return resultPath;
 	}
 
@@ -351,9 +351,9 @@ vector<pair<int, int>> TSPSolver::FindPath(int startX, int startY, int targetX, 
 			whichList[i][j] = 0;
 	}
 
-	parent = new pair<int, int>* [mine->GetHeight() + 1];
+	parent = new IntPair* [mine->GetHeight() + 1];
 	for (int i = 0; i < mine->GetHeight(); i++) {
-		parent[i] = new pair<int, int> [mine->GetWidth() + 1];
+		parent[i] = new IntPair [mine->GetWidth() + 1];
 	}
 
 	openList = new OpenListItem [mine->GetWidth()*mine->GetHeight()+2];
@@ -462,7 +462,7 @@ vector<pair<int, int>> TSPSolver::FindPath(int startX, int startY, int targetX, 
 		int tmp;
 		while (true) {
 			// Save path in reverse order
-			resultPath.push_back(pair<int, int> (x, y));
+			resultPath.push_back(IntPair (x, y));
 
 			if (x == startX && y == startY) break;
 
@@ -476,14 +476,14 @@ vector<pair<int, int>> TSPSolver::FindPath(int startX, int startY, int targetX, 
 
 		int size = (int) resultPath.size();
 		int amount = size/2;
-		pair<int, int> tmppair;
+		IntPair tmpIntPair;
 		for (int i = 0; i < amount; i++) {
-			tmppair = resultPath[size - i - 1];
+			tmpIntPair = resultPath[size - i - 1];
 			resultPath[size - i - 1] = resultPath[i];
-			resultPath[i] = tmppair;
+			resultPath[i] = tmpIntPair;
 		}
 		
-	} else resultPath.push_back(pair<int, int> (-1, -1));	// its better than return an empty vector
+	} else resultPath.push_back(IntPair (-1, -1));	// its better than return an empty vector
 
 // 7. Freeing used memory
 
@@ -572,7 +572,7 @@ void TSPSolver::SetTourPath()
 		int target = tour.at(i + 1);
 
 		// Get path between this nodes from path matrix
-		vector<pair<int, int>> currpath = GetPath(start, target);
+		vector<IntPair> currpath = GetPath(start, target);
 
 		// Path includes start node cell and target node cell also
 		// So, we can simply ignore currpath[0]

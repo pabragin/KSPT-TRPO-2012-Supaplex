@@ -6,6 +6,7 @@ Field::Field(void)
 	mapHeight = -1;
 	map = NULL;
 	liftIsOpen = false;
+	robotIsDead = false;
 }
 
 Field::Field(const Field & field)
@@ -17,10 +18,10 @@ Field::Field(const Field & field)
 	lift = field.lift;
 	liftIsOpen = field.liftIsOpen;
 
-	map = new char * [mapHeight];
-	for (int i = 0; i < mapHeight; i++) {
-		map[i] = new char [mapWidth];
-		for (int j = 0; j < mapWidth; j++) {
+	map = new _MineObject * [mapHeight];
+	for (size_t i = 0; i < mapHeight; i++) {
+		map[i] = new _MineObject [mapWidth];
+		for (size_t j = 0; j < mapWidth; j++) {
 			map[i][j] = field.map[i][j];
 		}
 	}
@@ -34,50 +35,46 @@ Field::~Field(void)
 }
 
 // Description: Loads map from file and fills Field's fields =)
-int Field::LoadMap(char * file)
+int Field::LoadMap(istream &sin)
 {
-	if (file == NULL) return -1;
-	ifstream fin(file);
-	if (!fin.is_open()) return -2;
-
 	lambdas.clear();
 
 	vector<string> buf;
 	string str;
-	int width = 0;
+	size_t width = 0;
 
 	// Counting mine's dimension
-	while (!fin.eof()) {
-		getline(fin, str);
+	while (!sin.eof()) {
+		getline(sin, str);
 		buf.push_back(str);
 		if (str.size() > width) width = str.size(); // remember the longest row
 	}
 
 	mapWidth = width;
 	mapHeight = buf.size();
-	fin.seekg(0, ios::beg);
+	sin.seekg(0, ios::beg);
 
 	map = new char * [mapHeight];
-	for (int i = 0; i < mapHeight; i++) {
+	for (size_t i = 0; i < mapHeight; i++) {
 		map[i] = new char [mapWidth];
-		for (int j = 0; j < mapWidth; j++) {
+		for (size_t j = 0; j < mapWidth; j++) {
 
 			// All rows shorter than map width are supplemented with whitespaces
 			if (j >= buf.at(i).size()) {
-				map[i][j] = ' ';
+				map[i][j] = EMPTY;
 				continue;
 			}
 			map[i][j] = buf.at(i)[j];
 
-			if (map[i][j] == 'R') {				// remembering robot coordinates
+			if (map[i][j] == ROBOT) {				// remembering robot coordinates
 				robot.first = i;
 				robot.second = j;
-			} else if (map[i][j] == '\\')
-				lambdas.push_back(pair<int, int>(i, j));	// filling lambdas's list
-			else if (map[i][j] == 'L') {		// remembering closed lift coordinates
+			} else if (map[i][j] == LAMBDA)
+				lambdas.push_back(IntPair(i, j));		// filling lambdas's list
+			else if (map[i][j] == CLOSED_LIFT) {	// remembering closed lift coordinates
 				lift.first = i;
 				lift.second = j;
-			} else if (map[i][j] == 'O') {		// remembering open lift coordinates
+			} else if (map[i][j] == OPENED_LIFT) {	// remembering open lift coordinates
 				lift.first = i;
 				lift.second = j;
 				liftIsOpen = true;
@@ -92,8 +89,8 @@ int Field::LoadMap(char * file)
 void Field::SaveMap(ostream &sout)
 {
 	sout << endl;
-	for (int i = 0; i < mapHeight; i++) {
-		for (int j = 0; j < mapWidth; j++) {
+	for (size_t i = 0; i < mapHeight; i++) {
+		for (size_t j = 0; j < mapWidth; j++) {
 			sout << map[i][j];
 		}
 		sout << endl;
@@ -102,10 +99,12 @@ void Field::SaveMap(ostream &sout)
 }
 
 // Description: Changes robot coordinates
-void Field::SetRobot(int x, int y)
+void Field::SetRobot(size_t x, size_t y)
 {
-	robot.first = x;
-	robot.second = y;
+	if (x < mapHeight && y < mapWidth) {
+		robot.first = x;
+		robot.second = y;
+	}
 }
 
 void Field::SetLiftState(bool isOpen)
@@ -118,7 +117,7 @@ void Field::ClearLambdas()
 	lambdas.clear();
 }
 
-void Field::AddLambda(pair<int, int> lambda)
+void Field::AddLambda(IntPair lambda)
 {
 	lambdas.push_back(lambda);
 }
@@ -128,12 +127,26 @@ void Field::PopBackLambda()
 	lambdas.pop_back();
 }
 
-int Field::FindLambda(pair<int, int> lambda)
+int Field::FindLambda(IntPair lambda)
 {
-	for (int i = 0; i < lambdas.size(); i++) {										// this is the worst method!!!
+	for (size_t i = 0; i < lambdas.size(); i++) {										// this is the worst method!!!
 		if (lambdas.at(i) == lambda) return i;
 	}
 	return -1;
+}
+
+_MineObject Field::GetObject(size_t x, size_t y)
+{
+	if (x < mapHeight && y < mapWidth)
+		return map[x][y];
+	else
+		return NULL;
+}
+
+void Field::SetObject(size_t x, size_t y, _MineObject OBJECT)
+{
+	if (x < mapHeight && y < mapWidth)
+		map[x][y] = OBJECT;
 }
 
 // Description: Returns map width
@@ -155,19 +168,19 @@ char ** Field::GetMap()
 }
 
 // Description: Returns robot coordinates
-pair<int, int> Field::GetRobot()
+IntPair Field::GetRobot()
 {
 	return this->robot;
 }
 
 // Description: Returns list of lambda's coordinates for all lambdas on map
-vector<pair<int, int>> Field::GetLambdas()
+vector<IntPair> Field::GetLambdas()
 {
 	return this->lambdas;
 }
 
 // Description: Returns lift coordinates
-pair<int, int> Field::GetLift()
+IntPair Field::GetLift()
 {
 	return this->lift;
 }
@@ -178,23 +191,96 @@ bool Field::isLiftOpened()
 	return this->liftIsOpen;
 }
 
+// Description: Updates map according to the rules
+void Field::UpdateMap()
+{
+	// Creating new state to record changes on the map
+	char ** newState = new _MineObject * [mapHeight];
+	for (size_t i = 0; i < mapHeight; i++) {
+		newState[i] = new _MineObject [mapWidth];
+		for (size_t j = 0; j < mapWidth; j++) {
+			newState[i][j] = WALL;
+		}
+	}
+	
+	for (size_t i = 1; i < mapHeight - 1; i++) {
+		for (size_t j = 1; j < mapWidth - 1; j++) {
+			// If (x; y) contains a Rock, and (x; y-1) is Empty:
+			// (x; y) is updated to Empty, (x; y-1) is updated to Rock.
+			if (map[i][j] == STONE && map[i + 1][j] == EMPTY) {
+				newState[i][j] = EMPTY;
+				newState[i + 1][j] = STONE;
+				if (map[i + 2][j] == ROBOT)
+					robotIsDead = true;
+			}
+			// If (x; y) contains a Rock, (x; y-1) contains a Rock, (x+1; y) is Empty and (x+1; y-1) is Empty:
+			// (x; y) is updated to Empty, (x+1; y-1) is updated to Rock.
+			else if (map[i][j] == STONE && map[i + 1][j] == STONE
+				&& map[i][j + 1] == EMPTY && map[i + 1][j + 1] == EMPTY) {
+					newState[i][j] = EMPTY;
+					newState[i + 1][j + 1] = STONE;
+					if (map[i + 2][j + 1] == ROBOT) 
+						robotIsDead = true;
+			}
+			// If (x; y) contains a Rock, (x; y-1) contains a Rock, either (x+1; y) is not Empty
+			// or (x+1; y-1) is not Empty, (x-1; y) is Empty and (x-1; y-1) is Empty:
+			// (x; y) is updated to Empty, (x-1; y-1) is updated to Rock.
+			else if (map[i][j] == STONE && map[i + 1][j] == STONE
+				&& (map[i][j + 1] != EMPTY || map[i + 1][j + 1] != EMPTY)
+				&& map[i][j - 1] == EMPTY && map[i + 1][j - 1] == EMPTY) {
+					newState[i][j] = EMPTY;
+					newState[i + 1][j - 1] = STONE;
+					if (map[i + 2][j - 1] == ROBOT) 
+						robotIsDead = true;
+			}
+			// If (x; y) contains a Rock, (x; y-1) contains a Lambda, (x+1; y) is Empty and (x+1; y-1) is Empty:
+			// (x; y) is updated to Empty, (x+1; y-1) is updated to Rock.
+			else if (map[i][j] == STONE && map[i + 1][j] == LAMBDA
+				&& map[i][j + 1] == EMPTY && map[i + 1][j + 1] == EMPTY) {
+					newState[i][j] = EMPTY;
+					newState[i + 1][j + 1] = STONE;
+					if (map[i + 2][j + 1] == ROBOT) 
+						robotIsDead = true;
+			}
+			// In all other cases, (x; y) remains unchanged.
+		}
+	}
+	// If (x; y) contains a Closed Lambda Lift, and there are no Lambdas remaining:
+	// (x; y) is updated to Open Lambda Lift.
+	if (lambdas.empty()) {
+		SetLiftState(true);
+		newState[lift.first][lift.second] = OPENED_LIFT;
+	}
+
+	// Rewriting old map according to the new state
+	for (size_t i = 0; i < mapHeight; i++) {
+		for (size_t j = 0; j < mapWidth; j++) {
+			if (newState[i][j] != WALL) map[i][j] = newState[i][j];
+		}
+	}
+
+	// Freeing memory
+	for (size_t i = 0; i < mapHeight; i++)
+		delete [] newState[i];
+}
+
 // Description: Checks, whether robot can go on this cage or not
-bool Field::isWalkable(int x, int y)																						// TBD: add some euristic
+bool Field::isWalkable(size_t x, size_t y)																						// TBD: add some euristic
 {
 	// If there is a wall, then robot fails
-	if (map[x][y] == '#') return false;
+	if (map[x][y] == WALL) return false;
 	// On the other side, robot can't go on right or left cage concerning him
 	// if there is a stone in this cage and there is something in next cage
-	if (map[x][y] == '*') {											// If there is a stone in this cage:
+	if (map[x][y] == STONE) {											// If there is a stone in this cage:
 		if (x == robot.first && y - 1 == robot.second) {			// then, if robot is to the left of a cage
-			if (map[x][y + 1] == ' ') return true;					// then robot succeeds if the right cage near stone is empty
+			if (map[x][y + 1] == EMPTY) return true;				// then robot succeeds if the right cage near stone is empty
 		} else if (x == robot.first && y + 1 == robot.second) {		// otherwise, if robot is to the right of a cage
-			if (map[x][y - 1] == ' ') return true;					// then robot succeeds if the left cage near stone is empty.
+			if (map[x][y - 1] == EMPTY) return true;				// then robot succeeds if the left cage near stone is empty.
 		}
 		return false;												// Robot fails in all other cases (i.e. next cage isn't empty).
 	}
 	// If there is a closed lift, then robot fails
-	if (map[x][y] == 'L') return false;
+	if (map[x][y] == CLOSED_LIFT) return false;
 	// Robot succeeds in all other cases.
 	// I.e. there is an earth, lambda or an open lift in the cage or the cage is empty.
 	return true;
@@ -209,10 +295,10 @@ Field Field::operator = (const Field & field)
 	lift = field.lift;
 	liftIsOpen = field.liftIsOpen;
 
-	map = new char * [field.mapHeight];
-	for (int i = 0; i < field.mapHeight; i++) {
-		map[i] = new char [field.mapWidth];
-		for (int j = 0; j < field.mapWidth; j++) {
+	map = new _MineObject * [field.mapHeight];
+	for (size_t i = 0; i < field.mapHeight; i++) {
+		map[i] = new _MineObject [field.mapWidth];
+		for (size_t j = 0; j < field.mapWidth; j++) {
 			map[i][j] = field.map[i][j];
 		}
 	}

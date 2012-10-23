@@ -4,37 +4,43 @@
 
 class Field
 {
-	int mapWidth;
-	int mapHeight;
-	char ** map;
-	pair<int, int> robot;
-	vector<pair<int, int>> lambdas;
-	pair<int, int> lift;
+	size_t mapWidth;
+	size_t mapHeight;
+	_MineObject ** map;
+	IntPair robot;
+	vector<IntPair> lambdas;
+	IntPair lift;
 	bool liftIsOpen;
+	bool robotIsDead;
+
 public:
 	Field(void);
 	Field(const Field & field);
 	~Field(void);
 
-	int LoadMap(char * file);		// loads map from file; fills Field's fields =)
+	int LoadMap(istream &sin);		// loads map from file; fills Field's fields =)
 	void SaveMap(ostream &sout);
 
-	void SetRobot(int x, int y);	// changes robot coordinates
+	void SetRobot(size_t x, size_t y);	// changes robot coordinates
 	void SetLiftState(bool isOpen);
 	void ClearLambdas();
-	void AddLambda(pair<int, int> lambda);
+	void AddLambda(IntPair lambda);
 	void PopBackLambda();
-	int FindLambda(pair<int, int> lambda);
+	int FindLambda(IntPair lambda);
+
+	_MineObject GetObject(size_t x, size_t y);
+	void SetObject(size_t x, size_t y, _MineObject OBJECT);
 
 	int GetWidth();
 	int GetHeight();
 	char ** GetMap();				// returns pointer to map
-	pair<int, int> GetRobot();		// returns robot coordinates
-	vector<pair<int, int>> GetLambdas();		// returns list of lambda's coordinates for all lambdas on map
-	pair<int, int> GetLift();					// returns lift coordinates
+	IntPair GetRobot();		// returns robot coordinates
+	vector<IntPair> GetLambdas();		// returns list of lambda's coordinates for all lambdas on map
+	IntPair GetLift();					// returns lift coordinates
 	bool isLiftOpened();			// returns the state of the lift
 
-	bool isWalkable(int x, int y);
+	void UpdateMap();	// updates map according to the rules
+	bool isWalkable(size_t x, size_t y);
 
 
 	Field operator = (const Field & field);

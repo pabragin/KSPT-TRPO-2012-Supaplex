@@ -12,16 +12,13 @@ Simulator::~Simulator(void)
 {
 }
 
-vector<pair<int, int>> Simulator::GetPath()
+vector<IntPair> Simulator::GetPath()
 {
 	return this->path;
 }
 
-void Simulator::StartSimulation(vector<pair<int, int>> waypoints)
+void Simulator::StartSimulation(vector<IntPair> waypoints)
 {
-	Field f = mine;
-
-
 	mine.ClearLambdas();
 	for (int i = waypoints.size() - 1; i > 0; i--) {							// waypoint #0 is a Robot !!!
 		mine.AddLambda(waypoints.at(i));
@@ -57,6 +54,7 @@ void Simulator::StartSimulation(vector<pair<int, int>> waypoints)
 		mine.PopBackLambda();
 	}
 
+	//mine.SaveMap(cout);
 
 	//mine = f;
 	//for (int i = 0; i < path.size(); i++) {
@@ -69,79 +67,20 @@ void Simulator::StartSimulation(vector<pair<int, int>> waypoints)
 // Description: Updates map according to the rules
 void Simulator::UpdateMap()
 {
-	// Creating new state to record changes on the map
-	char ** newState = new char* [mine.GetHeight()];
-	for (int i = 0; i < mine.GetHeight(); i++) {
-		newState[i] = new char [mine.GetWidth()];
-		for (int j = 0; j < mine.GetWidth(); j++) {
-			newState[i][j] = '#';
-		}
-	}
-	
-	for (int i = 1; i < mine.GetHeight() - 1; i++) {
-		for (int j = 1; j < mine.GetWidth() - 1; j++) {
-			// If (x; y) contains a Rock, and (x; y-1) is Empty:
-			// (x; y) is updated to Empty, (x; y-1) is updated to Rock.
-			if (mine.GetMap()[i][j] == '*' && mine.GetMap()[i + 1][j] == ' ') {
-				newState[i][j] = ' ';
-				newState[i + 1][j] = '*';
-				if (mine.GetMap()[i + 2][j] == 'R') 
-					robotIsDead = true;
-			}
-			// If (x; y) contains a Rock, (x; y-1) contains a Rock, (x+1; y) is Empty and (x+1; y-1) is Empty:
-			// (x; y) is updated to Empty, (x+1; y-1) is updated to Rock.
-			else if (mine.GetMap()[i][j] == '*' && mine.GetMap()[i + 1][j] == '*'
-				&& mine.GetMap()[i][j + 1] == ' ' && mine.GetMap()[i + 1][j + 1] == ' ') {
-					newState[i][j] = ' ';
-					newState[i + 1][j + 1] = '*';
-					if (mine.GetMap()[i + 2][j + 1] == 'R') 
-						robotIsDead = true;
-			}
-			// If (x; y) contains a Rock, (x; y-1) contains a Rock, either (x+1; y) is not Empty
-			// or (x+1; y-1) is not Empty, (x-1; y) is Empty and (x-1; y-1) is Empty:
-			// (x; y) is updated to Empty, (x-1; y-1) is updated to Rock.
-			else if (mine.GetMap()[i][j] == '*' && mine.GetMap()[i + 1][j] == '*'
-				&& (mine.GetMap()[i][j + 1] != ' ' || mine.GetMap()[i + 1][j + 1] != ' ')
-				&& mine.GetMap()[i][j - 1] == ' ' && mine.GetMap()[i + 1][j - 1] == ' ') {
-					newState[i][j] = ' ';
-					newState[i + 1][j - 1] = '*';
-					if (mine.GetMap()[i + 2][j - 1] == 'R') 
-						robotIsDead = true;
-			}
-			// If (x; y) contains a Rock, (x; y-1) contains a Lambda, (x+1; y) is Empty and (x+1; y-1) is Empty:
-			// (x; y) is updated to Empty, (x+1; y-1) is updated to Rock.
-			else if (mine.GetMap()[i][j] == '*' && mine.GetMap()[i + 1][j] == '\\'
-				&& mine.GetMap()[i][j + 1] == ' ' && mine.GetMap()[i + 1][j + 1] == ' ') {
-					newState[i][j] = ' ';
-					newState[i + 1][j + 1] = '*';
-					if (mine.GetMap()[i + 2][j + 1] == 'R') 
-						robotIsDead = true;
-			}
-			// In all other cases, (x; y) remains unchanged.
-		}
-	}
+	mine.UpdateMap();
+
 	// If (x; y) contains a Closed Lambda Lift, and there are no Lambdas remaining:
 	// (x; y) is updated to Open Lambda Lift.
 	if (mine.GetLambdas().size() == 1 && mine.GetLambdas().back() == mine.GetLift() && missedLambdas.empty()) {
 		mine.SetLiftState(true);
-		newState[mine.GetLift().first][mine.GetLift().second] = 'O';
+		mine.SetObject(mine.GetLift().first, mine.GetLift().second, OPENED_LIFT);
 	}
-
-	// Rewriting old map according to the new state
-	for (int i = 0; i < mine.GetHeight(); i++) {
-		for (int j = 0; j < mine.GetWidth(); j++) {
-			if (newState[i][j] != '#') mine.GetMap()[i][j] = newState[i][j];
-		}
-	}
-
-	// Freeing memory
-	for (int i = 0; i < mine.GetHeight(); i++)
-		delete [] newState[i];
 }
 
 
 bool Simulator::IsLiftBlocked() { //is lift blocked? lets see (will return true or false)
-    
+    bool liftBlocked = false;
+
     int rob_x = mine.GetRobot().first;     //some varibles
 	int rob_y = mine.GetRobot().second;
     int lift_x = mine.GetLift().first;
@@ -153,10 +92,10 @@ bool Simulator::IsLiftBlocked() { //is lift blocked? lets see (will return true 
     if ((rob_x == lift_x)&&(rob_y+2 == lift_y)&&!(mine.GetMap()[rob_x+1][rob_y-2] == ' ')){
         return true;
     }
-    if (((mine.GetMap()[rob_x][rob_y-2] == '*')||(mine.GetMap()[rob_x][rob_y-2] == '#'))&& (rob_x+1 == lift_x)&&(rob_y-1 == lift_y)){
+    if (((mine.GetMap()[rob_x][rob_y-2] == STONE)||(mine.GetMap()[rob_x][rob_y-2] == '#'))&& (rob_x+1 == lift_x)&&(rob_y-1 == lift_y)){
         return true;
     }
-    if (((mine.GetMap()[rob_x][rob_y+2] == '*')||(mine.GetMap()[rob_x][rob_y+2] == '#'))&&((rob_x+1 == lift_x)&&(rob_y+1 == lift_y))){
+    if (((mine.GetMap()[rob_x][rob_y+2] == STONE)||(mine.GetMap()[rob_x][rob_y+2] == '#'))&&((rob_x+1 == lift_x)&&(rob_y+1 == lift_y))){
         return true;
     }
     //ban drop stones on the lift
@@ -177,7 +116,7 @@ bool Simulator::IsLiftBlocked() { //is lift blocked? lets see (will return true 
 
 // Using A star algorithm modified for taking care about dynamic changes on map
 // At the begining - add reaction on the robot death
-int Simulator::MoveRobot(pair<int, int> target) {
+int Simulator::MoveRobot(IntPair target) {
 
 	const int infinity = 1000000;	// infinity Hcost of the cell where robot dies
 	int numberOfClosedListItems = 0;
@@ -187,13 +126,13 @@ int Simulator::MoveRobot(pair<int, int> target) {
 	int startY = mine.GetRobot().second;
 
 
-	vector<pair<int, int>> resultPath;			// vector of coordinates of cells in found path
+	vector<IntPair> resultPath;			// vector of coordinates of cells in found path
 	int result = 0;
 	const int nonexistent = 0, found = 1;		// path-related constants
 	const int inOpenList = 1, inClosedList = 2;	// lists-related constants
 	int parentX, parentY, Gcost;
 	int ** whichList;			// used to record whether a cell is on the open list or on the closed list.
-	pair<int, int> ** parent;	// used to record parent of each cage
+	IntPair ** parent;	// used to record parent of each cage
 	OpenListItem * openList;	// array holding open list items, which is maintained as a binary heap.
 	int numberOfOpenListItems;
 
@@ -212,9 +151,9 @@ int Simulator::MoveRobot(pair<int, int> target) {
 			whichList[i][j] = 0;
 	}
 
-	parent = new pair<int, int>* [mine.GetHeight() + 1];
+	parent = new IntPair* [mine.GetHeight() + 1];
 	for (int i = 0; i < mine.GetHeight(); i++) {
-		parent[i] = new pair<int, int> [mine.GetWidth() + 1];
+		parent[i] = new IntPair [mine.GetWidth() + 1];
 	}
 
 	openList = new OpenListItem [mine.GetWidth()*mine.GetHeight()+2];
@@ -238,7 +177,7 @@ int Simulator::MoveRobot(pair<int, int> target) {
 	openList[1].SetX(startX);	// assign it as the top item in the binary heap
 	openList[1].SetY(startY);
 	openList[1].SetGcost(0);	// reset starting cell's G value to 0
-	parent[startX][startY] = pair<int, int> (startX, startY);
+	parent[startX][startY] = IntPair (startX, startY);
 
 
 // ****************************
@@ -249,6 +188,28 @@ int Simulator::MoveRobot(pair<int, int> target) {
 
 
 // 3. Do it until the path is found or recognized as nonexistent.
+
+
+// 3.0 Analyze target cell's position
+
+	// Trying to avoid situations like this:
+	//
+	//  *
+	// #\#
+	//
+	// and this:
+	//
+	// #*
+	// #.
+	// # #
+	// # #
+	// #\#
+	// ###
+	// 
+
+	IsDeadLock(target.first, target.second);
+
+
 
 	while (true) {
 	
@@ -270,15 +231,21 @@ int Simulator::MoveRobot(pair<int, int> target) {
 				mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
 				// making a step and updating map
 				bool stoneMoved = Step(openList[1].GetX(), openList[1].GetY());
-				if(stoneMoved){
-					if (IsLiftBlocked()) {
-						openList[1].SetHcost(infinity);
-						whichList[parentX][parentY] = inClosedList;                   // add item to the closed list
-						DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems); // delete this item from the open list
-						mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
-						continue;
-					}
-			    }
+
+				// TBD: need to fix IsLiftBlocked()
+
+				//if(stoneMoved){
+				//	if (IsLiftBlocked()) {
+				//		openList[1].SetHcost(infinity);
+				//		whichList[parentX][parentY] = inClosedList;                   // add item to the closed list
+				//		DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems); // delete this item from the open list
+				//		mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
+				//		continue;
+				//	}
+
+
+
+			 //   }
 				UpdateMap();
 
 				//mine.SaveMap(cout);																		// testing print to stdout
@@ -354,7 +321,7 @@ int Simulator::MoveRobot(pair<int, int> target) {
 		int tmp;
 		while (true) {
 			// Save path in reverse order
-			resultPath.push_back(pair<int, int> (x, y));
+			resultPath.push_back(IntPair (x, y));
 
 			if (x == startX && y == startY) break;
 
@@ -390,17 +357,31 @@ int Simulator::MoveRobot(pair<int, int> target) {
 	return 0;
 }
 
-
-int Simulator::FindMissedLambda(pair<int, int> lambda)
+bool Simulator::IsDeadLock(int x, int y)
 {
-	for (int i = 0; i < missedLambdas.size(); i++) {										// this is the worst method!!!
+	if (!mine.isWalkable(x, y - 1) && !mine.isWalkable(x, y + 1) && mine.GetObject(x - 1, y) == STONE)
+		return true;
+
+	for (int i = x - 1; i > 0; i--) {
+		if (!mine.isWalkable(i, y - 1) && !mine.isWalkable(i, y + 1) && mine.isWalkable(i, y)) {
+			continue;
+		}
+		if (mine.GetObject(i - 1, y) == STONE && mine.isWalkable(i, y))
+			return true;
+	}
+	return false;
+}
+
+int Simulator::FindMissedLambda(IntPair lambda)
+{
+	for (size_t i = 0; i < missedLambdas.size(); i++) {										// this is the worst method!!!
 		if (missedLambdas.at(i) == lambda) return i;
 	}
 	return -1;
 }
 bool Simulator::FindUnexpectedLambda(int index)
 {
-	for (int i = 0; i < unexpectedLambdas.size(); i++) {									// this is the worst method!!!
+	for (size_t i = 0; i < unexpectedLambdas.size(); i++) {									// this is the worst method!!!
 		if (unexpectedLambdas.at(i) == index) return true;
 	}
 	return false;
@@ -414,17 +395,17 @@ bool Simulator::Step(int x, int y)
 	int yold = mine.GetRobot().second;
     
 	// If there is a stone in this cage
-	if (mine.GetMap()[x][y] == '*') {
+	if (mine.GetObject(x, y) == STONE) {
 		if (x == xold && y - 1 == yold) {				// then, if robot is to the left of the stone
-			mine.GetMap()[x][y + 1] = '*';
+			mine.SetObject(x, y + 1, STONE);
 		} else if (x == xold && y + 1 == yold) {		// otherwise, if robot is to the right of the stone
-			mine.GetMap()[x][y - 1] = '*';
+			mine.SetObject(x, y - 1, STONE);
 		}
         stoneMoved = true;
 	}
 
-	mine.GetMap()[xold][yold] = ' ';
-	mine.GetMap()[x][y] = 'R';
+	mine.SetObject(xold, yold, EMPTY);
+	mine.SetObject(x, y, ROBOT);
 	mine.SetRobot(x, y);
     return stoneMoved;
 }
@@ -444,7 +425,7 @@ void Simulator::LoadSnapshot()
 
 
 void Simulator::AddAdjacentCellsToOpenList(OpenListItem * openList, int & numberOfOpenListItems,
-	int parentX, int parentY, int Gcost, int ** whichList, pair<int, int> ** parent, pair<int, int> target, 
+	int parentX, int parentY, int Gcost, int ** whichList, IntPair ** parent, IntPair target, 
 	OpenListItem * closedList, int & numberOfClosedListItems)
 {
 	const int inOpenList = 1, inClosedList = 2;	// lists-related constants
@@ -461,7 +442,7 @@ void Simulator::AddAdjacentCellsToOpenList(OpenListItem * openList, int & number
 				// If not a wall/obstacle square.
 				if (mine.isWalkable(x, y)) {
 
-					if ( !(x == parentX + 1 && y == parentY && mine.GetMap()[parentX - 1][parentY] == '*') ) {
+					if ( !(x == parentX + 1 && y == parentY && mine.GetMap()[parentX - 1][parentY] == STONE) ) {
 
 						// If cell is not already on the open list and is not in the closed list, add it to the open list.
 						if (whichList[x][y] != inOpenList && whichList[x][y] != inClosedList) {

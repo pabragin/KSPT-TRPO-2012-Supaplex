@@ -5,17 +5,19 @@
 
 class Game
 {
-	Field map;
+	Field mine;
 	int score;
-	vector<char> trace;
+	vector<_Command> trace;
 public:
 	Game(void);
 	~Game(void);
 
-	int Start(char * file);
+	int Init(istream &sin);
 	void Solve(const int & iterations);
 
+	void MoveRobot(_Command DIRECTION);
+
 private:
-	void BuildPathByCoord(vector<pair<int, int>> * path);
+	void BuildPathByCoord(vector<IntPair> * path);
 };
 
