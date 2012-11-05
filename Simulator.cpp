@@ -39,6 +39,7 @@ void Simulator::StartSimulation(vector<IntPair> waypoints)
 
 		//cout << "Saved global snapshot:" << endl;
 		//snapshot.back().SaveMap(cout);
+		size_t index = path.size();
 
 		result = MoveRobot(mine.GetLambdas().at(i));
 
@@ -49,12 +50,13 @@ void Simulator::StartSimulation(vector<IntPair> waypoints)
 			//mine.SaveMap(cout);
 
 			missedLambdas.push_back(mine.GetLambdas().at(i));
+			continue;
 		}
 
 		mine.PopBackLambda();
 	}
 
-	//mine.SaveMap(cout);
+	mine.SaveMap(cout);
 
 	//mine = f;
 	//for (int i = 0; i < path.size(); i++) {
@@ -78,40 +80,37 @@ void Simulator::UpdateMap()
 }
 
 
-bool Simulator::IsLiftBlocked() { //is lift blocked? lets see (will return true or false)
-    bool liftBlocked = false;
+bool Simulator::IsLiftBlocked() {			// is lift blocked? lets see (will return true or false)
+    int robotX = mine.GetRobot().first;     // some variables for sintax sugar
+	int robotY = mine.GetRobot().second;
+    int liftX = mine.GetLift().first;
+    int liftY = mine.GetLift().second;
 
-    int rob_x = mine.GetRobot().first;     //some varibles
-	int rob_y = mine.GetRobot().second;
-    int lift_x = mine.GetLift().first;
-    int lift_y = mine.GetLift().second;
-    // set of cases when the lift is blocked 
-    if ((rob_x == lift_x)&&(rob_y-2 == lift_y)&&!(mine.GetMap()[rob_x+1][rob_y+2] == ' ')){
-        return true;
-    }
-    if ((rob_x == lift_x)&&(rob_y+2 == lift_y)&&!(mine.GetMap()[rob_x+1][rob_y-2] == ' ')){
-        return true;
-    }
-    if (((mine.GetMap()[rob_x][rob_y-2] == STONE)||(mine.GetMap()[rob_x][rob_y-2] == '#'))&& (rob_x+1 == lift_x)&&(rob_y-1 == lift_y)){
-        return true;
-    }
-    if (((mine.GetMap()[rob_x][rob_y+2] == STONE)||(mine.GetMap()[rob_x][rob_y+2] == '#'))&&((rob_x+1 == lift_x)&&(rob_y+1 == lift_y))){
-        return true;
-    }
-    //ban drop stones on the lift
-    if(((lift_y == rob_y-1)||(lift_y == rob_y+1))&& (!(mine.GetMap()[lift_x-1][lift_y+1] == ' ')||!(mine.GetMap()[lift_x-1][lift_y-1] == ' '))){
-        for (int i=1 ;i < (lift_x-rob_x-1);i++){
-             if (mine.GetMap()[rob_x+i][rob_y-1] == ' '){
-                  liftBlocked = true;
-              }
-             else {
-                 liftBlocked = false;
-             }
-       } return liftBlocked;
-    }
-    else {
-        return false;
-    }
+	if (!mine.isWalkable(liftX - 1, liftY) && !mine.isWalkable(liftX + 1, liftY) && 
+		!mine.isWalkable(liftX, liftY - 1) && !mine.isWalkable(liftX, liftY + 1)) {
+			return true;
+	}
+
+	int stoneX = robotX, stoneY;
+	if (mine.GetObject(robotX, robotY - 1) == STONE)
+		stoneY = robotY - 1;
+	else if (mine.GetObject(robotX, robotY + 1) == STONE)
+		stoneY = robotY + 1;
+	
+	int endX = -1;
+	for (int i = stoneX + 1; i <= liftX; i++) {
+		if (mine.GetObject(i, stoneY) != EMPTY) {
+			endX = i;
+			break;
+		}
+	}
+	if (endX == -1) return false;
+	if ((endX == liftX && abs(stoneY - liftY) == 1) ||
+		(endX == liftX - 1 && stoneY == liftY)) {
+			return true;
+	}
+
+	return false;
 }
 
 // Using A star algorithm modified for taking care about dynamic changes on map
@@ -232,20 +231,14 @@ int Simulator::MoveRobot(IntPair target) {
 				// making a step and updating map
 				bool stoneMoved = Step(openList[1].GetX(), openList[1].GetY());
 
-				// TBD: need to fix IsLiftBlocked()
+				if (stoneMoved && IsLiftBlocked()) {
+					openList[1].SetHcost(infinity);
+					whichList[parentX][parentY] = inClosedList;                   // add item to the closed list
+					DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems); // delete this item from the open list
+					mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
+					continue;
+			    }
 
-				//if(stoneMoved){
-				//	if (IsLiftBlocked()) {
-				//		openList[1].SetHcost(infinity);
-				//		whichList[parentX][parentY] = inClosedList;                   // add item to the closed list
-				//		DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems); // delete this item from the open list
-				//		mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
-				//		continue;
-				//	}
-
-
-
-			 //   }
 				UpdateMap();
 
 				//mine.SaveMap(cout);																		// testing print to stdout
@@ -256,17 +249,17 @@ int Simulator::MoveRobot(IntPair target) {
 			// Cheking robot's death after update (this is a simple algorithm, need to add more euristic methods)
 			if (robotIsDead) {
 
-				// If this cell is target cell, then we refuse it at all and roll back
-				if (openList[1].GetX() == target.first && openList[1].GetY() == target.second) {
-					result = nonexistent;
-					break;
-				}
+				//// If this cell is target cell, then we refuse it at all and roll back
+				//if (openList[1].GetX() == target.first && openList[1].GetY() == target.second) {					// TBD: useless?
+				//	result = nonexistent;
+				//	break;
+				//}
 
 				// If it is not our target cell, set infinity H cost and transfer item to the closed list - it is not the best rule
-				openList[1].SetHcost(infinity);
-				whichList[parentX][parentY] = inClosedList;						// add item to the closed list
-				numberOfClosedListItems++;
-				closedList[numberOfClosedListItems] = openList[1];
+//				openList[1].SetHcost(infinity);
+//				whichList[parentX][parentY] = inClosedList;						// add item to the closed list
+//				numberOfClosedListItems++;
+//				closedList[numberOfClosedListItems] = openList[1];
 				DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems);	// delete this item from the open list
 
 				mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];	// load snapshot
@@ -472,14 +465,14 @@ void Simulator::AddAdjacentCellsToOpenList(OpenListItem * openList, int & number
 
 							// If this path is shorter (G cost is lower) then change the parent cell, G cost and F cost. 		
 							if (Gcost < openList[index].GetGcost()) {
-								parent[x][y].first = parentX;			// change the cell's parent
+								parent[x][y].first = parentX;		// change the cell's parent
 								parent[x][y].second = parentY;
 								openList[index].SetGcost(Gcost);	// change the G cost
 								openList[index].CalculateFcost();	// update the F cost
 								BubbleItemInBinaryHeap(openList, index);		// update cell's position on the open list
 							}
 						}
-						// If cell is already on the open list and it is not current cell's parent, choose better G and F costs.
+						// If cell is already on the closed list and it is not current cell's parent, choose better G and F costs.
 						else if (whichList[x][y] == inClosedList) {
 							int oldParX = parent[parentX][parentY].first;
 							int oldParY = parent[parentX][parentY].second;

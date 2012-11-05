@@ -9,7 +9,7 @@ class TSPSolver
 {
 	Field * mine;
 	map<IntPair, int> distMatrix;
-	map<IntPair, vector<IntPair>> pathMatrix;
+	map< IntPair, vector<IntPair> > pathMatrix;
 
 	vector<IntPair> path;
 	vector<IntPair> nodes;

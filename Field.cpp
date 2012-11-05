@@ -267,11 +267,14 @@ void Field::UpdateMap()
 // Description: Checks, whether robot can go on this cage or not
 bool Field::isWalkable(size_t x, size_t y)																						// TBD: add some euristic
 {
+	// Avoid 'index out of bounds' situations
+	if (x >= mapHeight || y >= mapWidth) return false;
+
 	// If there is a wall, then robot fails
 	if (map[x][y] == WALL) return false;
 	// On the other side, robot can't go on right or left cage concerning him
 	// if there is a stone in this cage and there is something in next cage
-	if (map[x][y] == STONE) {											// If there is a stone in this cage:
+	if (map[x][y] == STONE) {										// If there is a stone in this cage:
 		if (x == robot.first && y - 1 == robot.second) {			// then, if robot is to the left of a cage
 			if (map[x][y + 1] == EMPTY) return true;				// then robot succeeds if the right cage near stone is empty
 		} else if (x == robot.first && y + 1 == robot.second) {		// otherwise, if robot is to the right of a cage
