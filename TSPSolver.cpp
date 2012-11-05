@@ -213,20 +213,6 @@ int TSPSolver::CalcTourDistance()
 	return dist;
 }
 
-// Description: Saves current mine state
-void TSPSolver::MakeSnapshot()
-{
-	Field f = *mine;
-	snapshot.push_back(f);
-}
-
-// Description: Restores last mine state
-void TSPSolver::LoadSnapshot()
-{
-	*mine = snapshot.back();
-	snapshot.pop_back();
-}
-
 // Description: Solve TSP problem with Nearest Neighbour algorithm
 void TSPSolver::CreateNearestNeighbourTour()
 {
