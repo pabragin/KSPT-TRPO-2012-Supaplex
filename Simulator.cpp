@@ -56,7 +56,7 @@ void Simulator::StartSimulation(vector<IntPair> waypoints)
 		mine.PopBackLambda();
 	}
 
-	mine.SaveMap(cout);
+	//mine.SaveMap(cout);
 
 	//mine = f;
 	//for (int i = 0; i < path.size(); i++) {
