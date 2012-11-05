@@ -34,7 +34,8 @@ void Game::Solve(const int & iterations)
 
 	//ofstream fout("..//IO files//output.txt", ios::app);
 
-	BuildPathByCoord(&sim.GetPath());
+	vector<IntPair> path = sim.GetPath();
+	BuildPathByCoord(&path);
 
 	for (size_t i = 0; i < trace.size(); i++) {
 		cout << trace[i];
@@ -71,7 +72,7 @@ void Game::MoveRobot(_Command COMMAND)
 		return;
 	}
 
-	if (mine.isWalkable(x, y)) {
+	if (mine.isWalkable((int) x, (int) y)) {
 		// If there is a stone in this cage
 		if (mine.GetObject(x, y) == STONE) {
 			if (COMMAND == RIGHT) {				// then, if robot is to the left of the stone
