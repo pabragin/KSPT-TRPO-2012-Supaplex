@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "OpenListItem.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -15,25 +14,8 @@
 
 using namespace std;
 
-typedef pair<int, int> IntPair;
+#include "Forwards.h"
+#include "OpenListItem.h"
 
-typedef char _MineObject;
-typedef char _Command;
-
-#define ROBOT 'R'
-#define STONE '*'
-#define WALL '#'
-#define EARTH '.'
-#define LAMBDA '\\'
-#define CLOSED_LIFT 'L'
-#define OPENED_LIFT 'O'
-#define EMPTY ' '
-
-#define RIGHT 'R'
-#define LEFT 'L'
-#define UP 'U'
-#define DOWN 'D'
-#define WAIT 'W'
-#define ABORT 'A'
 
 // TODO: reference additional headers your program requires here

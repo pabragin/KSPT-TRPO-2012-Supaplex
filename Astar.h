@@ -8,14 +8,14 @@ class Astar																												// TBD: move it into TSPSolver class?
 	int mapWidth;
 	int mapHeight;
 	
-	vector<pair<int, int>> resultPath;
+	CoordinatesVector resultPath;
 
 public:
 	Astar(void);
 	Astar(char **, int m, int n);
 	~Astar(void);
 
-	vector<pair<int, int>> GetResultPath();
+	CoordinatesVector GetResultPath();
 	int GetPathLength();
 
 	int FindPath(int startX, int startY, int targetX, int targetY, bool useHcost = true);	// Finds a path using A*.	// TBD: using useHcost = false (i.e. Dijkstra instead of Astar) is useless?

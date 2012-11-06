@@ -2,13 +2,20 @@
 #include <curses.h>
 #include <stdio.h>
 #include <stdlib.h>
+<<<<<<< HEAD
+=======
+#include <string>
+>>>>>>> origin/master
 #include <fstream>
 
 
 #define ENTER 10
 #define ESCAPE 27
+<<<<<<< HEAD
 #define BACKSPACE 127
 
+=======
+>>>>>>> origin/master
 GUI::GUI(){
 	int key, selected_from_m, selected_from_h;
 
@@ -49,10 +56,20 @@ GUI::GUI(){
 		}
 	}
 	hotkeys(key);
+<<<<<<< HEAD
+=======
+	if (key==11){
+	  if(current_window==1){
+	  draw_enter_commands();
+	  input_Line();
+	  }
+	}
+>>>>>>> origin/master
 	//printw("%i",key);//print number of char
 	if (key==KEY_RESIZE){
 	  resize_refresh();
 	}
+<<<<<<< HEAD
 	}while (selected_from_m!=4&&key!=5);//exit from game if select exit from menu or ctrl-e pressed
     	endwin();
 }
@@ -113,10 +130,41 @@ int GUI::input_Line(){
 	}
 	bool f=true;
 	while(f==true){
+=======
+	}while (selected_from_m!=4&&key!=5);
+    	endwin();
+}
+
+bool GUI::hotkeys(int key){
+	switch (key){
+	  case 14:
+	    current_window=1;
+	    resize_refresh();
+	    return true;
+	  case 8:
+	    current_window=2;
+	    resize_refresh();
+	    return true;
+	  case 1:
+	    current_window=3;
+	    resize_refresh();
+	    return true;
+	  default:
+	    return false;
+	}   
+}
+string GUI::input_Line(){
+	int key;
+	int xx;
+	int yy;
+	string s;
+	while(key!=ESCAPE && key!=KEY_RESIZE){
+>>>>>>> origin/master
 	key=getch();
 	switch (key){
 	  case 'u': waddstr(commands_line,"U");
 		    wrefresh(commands_line);
+<<<<<<< HEAD
 		    strC+="U";
 		    break;
 	  case 'd': waddstr(commands_line,"D");
@@ -192,17 +240,56 @@ int GUI::input_Line(){
 	}
 	}
 	return 0;
+=======
+		    s+=key;
+		    break;
+	  case 'd': waddstr(commands_line,"D");
+		    wrefresh(commands_line);
+		    s+=key;
+		    break;
+	  case 'l': waddstr(commands_line,"L");
+		    wrefresh(commands_line);
+		    s+=key;
+		    break;
+	  case 'r': waddstr(commands_line,"R");
+		    wrefresh(commands_line);
+		    s+=key;
+		    break;
+	  case 263 : getyx(commands_line, yy, xx);
+		     if (yy!=0 && xx==0){
+		       yy=yy-1;
+		       xx=getmaxx(commands_line);
+		     }
+		     mvwaddstr(commands_line, yy, xx-1, " ");
+		     s=s.substr(0,s.size()-1);
+		     wmove(commands_line, yy, xx-1);
+		     wrefresh(commands_line);
+		     break;
+	  case ENTER :resize_refresh(); 
+		      return s;
+	}
+	}
+	resize_refresh(); 
+	return NULL;
+>>>>>>> origin/master
 }
 void GUI::resize_refresh(){
 	x = getmaxx(stdscr);//terminal size
 	y = getmaxy(stdscr);
+<<<<<<< HEAD
 	werase(stdscr);
+=======
+>>>>>>> origin/master
 	if(x>5 && y>10){
 	draw_game_name();
 	draw_menubar();
 	if (current_window==1){
 		WINDOW **gw = draw_game_win();
+<<<<<<< HEAD
 		string s= str;
+=======
+		string s= "1234567890123456789012345678901234567890123456789012345678901234567";
+>>>>>>> origin/master
 		draw_points(100, 10, 1, s.c_str(), gw);
 		char **map;
 		map = (char**)malloc(9);
@@ -210,26 +297,39 @@ void GUI::resize_refresh(){
 		map[1] = "###";
 		map[2] = "#L#";
 		draw_map(map, 3, 3, gw[0]);
+<<<<<<< HEAD
 		touchwin(stdscr);
 		refresh();
+=======
+>>>>>>> origin/master
 		}
 	else if (current_window==2){
 		game_win=subwin(stdscr,y-5,x-4,4,2);//size of game window
 		wbkgd(game_win,COLOR_PAIR(2));
 		help_game_win();
+<<<<<<< HEAD
 		touchwin(stdscr);
 		refresh();
+=======
+>>>>>>> origin/master
 	}
 	else if (current_window==3){
 		game_win=subwin(stdscr,y-5,x-4,4,2);//size of game window
 		wbkgd(game_win,COLOR_PAIR(2));
 		about_game_win();
+<<<<<<< HEAD
 		touchwin(stdscr);
 		refresh();
 	}
 	else if (current_window==4){
 		WINDOW **gw = draw_game_win();
 		string s= str;
+=======
+	}
+	else if (current_window==4){
+		WINDOW **gw = draw_game_win();
+		string s= "1234567890123456789012345678901234567890123456789012345678901234567";
+>>>>>>> origin/master
 		draw_points(100, 10, 1, s.c_str(), gw);
 		char **map;
 		map = (char**)malloc(9);
@@ -237,6 +337,7 @@ void GUI::resize_refresh(){
 		map[1] = "###";
 		map[2] = "#L#";
 		draw_map(map, 3, 3, gw[0]);
+<<<<<<< HEAD
 		touchwin(stdscr);
 		refresh();
 		draw_enter_commands();
@@ -252,14 +353,34 @@ void GUI::init_curses(){
     init_pair(1,COLOR_WHITE,COLOR_BLUE);
     init_pair(2,COLOR_BLUE,COLOR_WHITE);
     init_pair(3,COLOR_RED,COLOR_WHITE);
+=======
+		}
+	}
+	touchwin(stdscr);
+	refresh();
+
+}
+void GUI::init_curses(){
+        initscr();
+        start_color();
+        init_pair(1,COLOR_WHITE,COLOR_BLUE);
+        init_pair(2,COLOR_BLUE,COLOR_WHITE);
+        init_pair(3,COLOR_RED,COLOR_WHITE);
+>>>>>>> origin/master
 	init_pair(4,COLOR_RED,COLOR_BLUE);
 	init_pair(5,COLOR_BLUE,COLOR_BLUE);
 	init_pair(6,COLOR_YELLOW,COLOR_WHITE);
 	init_pair(7,COLOR_YELLOW,COLOR_BLUE);
 	init_pair(8,COLOR_WHITE,COLOR_BLACK);
+<<<<<<< HEAD
     curs_set(0);
     noecho();
     keypad(stdscr,TRUE);
+=======
+        curs_set(0);
+        noecho();
+        keypad(stdscr,TRUE);
+>>>>>>> origin/master
 }
 
 void GUI::draw_menubar(){
@@ -299,7 +420,12 @@ WINDOW **GUI::draw_game_win(){
 	wmove(frames[1],5,1);
 	waddstr(frames[1],"Lambdas:");
 	wmove(frames[2],1,1);
+<<<<<<< HEAD
     waddstr(frames[2],"Trace:");
+=======
+	wattron(frames[2],COLOR_PAIR(3));
+    	waddstr(frames[2],"Trace:");
+>>>>>>> origin/master
 	touchwin(stdscr);
 	refresh();
 	return frames;
@@ -441,6 +567,7 @@ int GUI::scroll_menu(WINDOW **items){
 				  break;
 			}
 			wnoutrefresh(items[selected+1]);
+<<<<<<< HEAD
                         doupdate();
                 } else if (key==ESCAPE) {
                         return -1;
@@ -456,6 +583,158 @@ int GUI::scroll_menu(WINDOW **items){
 		}
         }
 }
+int GUI::scroll_help(WINDOW **items){
+        int key;
+        int selected=0;
+	int count =2;
+        while (1) {
+                key=getch();
+                if (key==KEY_DOWN || key==KEY_UP) {
+                        wbkgd(items[selected+1],COLOR_PAIR(2));
+			switch (selected){
+			  case 0: wmove(items[1], 0,0);
+				  wattron(items[1],COLOR_PAIR(6));
+				  waddstr(items[1],"H");
+				  wattroff(items[1],COLOR_PAIR(6));
+			  case 1: wmove(items[2], 0,0);
+				  wattron(items[2],COLOR_PAIR(6));
+				  waddstr(items[2],"A");
+				  wattroff(items[2],COLOR_PAIR(6));
+				  break;
+				
+			}
+                        wnoutrefresh(items[selected+1]);
+                        if (key==KEY_DOWN) {
+                                selected=(selected+1) % count;
+                        } else {
+                                selected=(selected+count-1) % count;
+                        }
+                        wbkgd(items[selected+1],COLOR_PAIR(1));
+			switch (selected){
+			  case 0: wmove(items[1], 0,0);
+				  wattron(items[1],COLOR_PAIR(7));
+				  waddstr(items[1],"H");
+				  wattroff(items[1],COLOR_PAIR(7));
+			  case 1: wmove(items[2], 0,0);
+				  wattron(items[2],COLOR_PAIR(7));
+				  waddstr(items[2],"A");
+				  wattroff(items[2],COLOR_PAIR(7));
+				  break;
+			}
+			wnoutrefresh(items[selected+1]);
+=======
+>>>>>>> origin/master
+                        doupdate();
+                } else if (key==ESCAPE) {
+                        return -1;
+                } else if (key==ENTER) {
+                        return selected;
+                }
+                if (key==KEY_RESIZE){
+			resize_refresh();
+			return -2;
+		}
+		if (hotkeys(key)==true){
+			return -3;
+		}
+        }
+}
+<<<<<<< HEAD
+WINDOW **GUI::draw_menu(){
+        int i;
+        WINDOW **items;
+        items=(WINDOW **)malloc(6*sizeof(WINDOW *));
+
+        items[0]=newwin(7,19,1,0);
+        wbkgd(items[0],COLOR_PAIR(2));
+        box(items[0],ACS_VLINE,ACS_HLINE);
+        items[1]=subwin(items[0],1,17,2,1);
+        items[2]=subwin(items[0],1,17,3,1);
+        items[3]=subwin(items[0],1,17,4,1);
+        items[4]=subwin(items[0],1,17,5,1);
+	items[5]=subwin(items[0],1,17,6,1);
+	waddstr(items[1]," ew game");
+	wattron(items[2],COLOR_PAIR(6));
+	waddstr(items[2],"R");
+	wattroff(items[2],COLOR_PAIR(6));
+	wprintw(items[2],"eset");
+	wattron(items[3],COLOR_PAIR(6));
+	waddstr(items[3],"M");
+	wattroff(items[3],COLOR_PAIR(6));
+	wprintw(items[3],"ap editor");
+	wattron(items[4],COLOR_PAIR(6));
+	waddstr(items[4],"S");
+	wattroff(items[4],COLOR_PAIR(6));
+	wprintw(items[4],"olve");
+	wattron(items[5],COLOR_PAIR(6));
+	waddstr(items[5],"E");
+	wattroff(items[5],COLOR_PAIR(6));
+	wprintw(items[5],"xit");
+        wbkgd(items[1],COLOR_PAIR(1));
+	wmove(items[1], 0,0);
+	wattron(items[1],COLOR_PAIR(7));
+	waddstr(items[1],"N");
+	wattroff(items[1],COLOR_PAIR(7));
+        wrefresh(items[0]);
+        return items;
+}
+WINDOW **GUI::draw_menu_help(){
+        int i;
+        WINDOW **items;
+        items=(WINDOW **)malloc(3*sizeof(WINDOW *));
+
+        items[0]=newwin(4,19,1,15);
+        wbkgd(items[0],COLOR_PAIR(2));
+        box(items[0],ACS_VLINE,ACS_HLINE);
+        items[1]=subwin(items[0],1,17,2,16);
+        items[2]=subwin(items[0],1,17,3,16);
+        waddstr(items[1]," elp_contents");
+	wattron(items[2],COLOR_PAIR(6));
+	waddstr(items[2],"A");
+	wattroff(items[2],COLOR_PAIR(6));
+	wprintw(items[2],"bout");
+        wbkgd(items[1],COLOR_PAIR(1));
+	wmove(items[1], 0,0);
+	wattron(items[1],COLOR_PAIR(7));
+	waddstr(items[1],"H");
+	wattroff(items[1],COLOR_PAIR(7));
+        wrefresh(items[0]);
+        return items;
+}
+
+WINDOW **GUI::draw_enter_commands(){
+        int i;
+        WINDOW **items;
+        items=(WINDOW **)malloc(3*sizeof(WINDOW *));
+        items[0]=newwin(6,x-6,y/2-3,3);
+        wbkgd(items[0],COLOR_PAIR(2));
+        box(items[0],ACS_VLINE,ACS_HLINE);
+        items[1]=subwin(items[0],1,30,y/2-2,4);
+        items[2]=subwin(items[0],3,x-8,y/2-1,4);
+        waddstr(items[1],"Please, enter commands:");
+	wbkgd(items[2],COLOR_PAIR(8));
+	commands_line=items[2];
+        wrefresh(items[0]);
+        return items;
+}
+
+int GUI::enter_commands_line(WINDOW **items){
+        int key;
+        int selected=0;
+	int count =2;
+}
+void GUI::draw_game_name(){
+	werase(stdscr);
+	gamename=subwin(stdscr,3,20,1,x/2-10);
+	wbkgd(gamename,COLOR_PAIR(1));
+	box(gamename,ACS_VLINE|A_BOLD,ACS_HLINE|A_BOLD);
+	attron(A_BLINK|A_BOLD|A_UNDERLINE);
+	move(2,x/2-4);
+	printw("SUPAPLEX");
+	attroff(A_BLINK|A_BOLD|A_UNDERLINE);
+}
+
+=======
 int GUI::scroll_help(WINDOW **items){
         int key;
         int selected=0;
@@ -604,3 +883,4 @@ void GUI::draw_game_name(){
 	attroff(A_BLINK|A_BOLD|A_UNDERLINE);
 }
 
+>>>>>>> origin/master

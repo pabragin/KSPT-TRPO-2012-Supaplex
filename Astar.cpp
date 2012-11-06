@@ -22,7 +22,7 @@ Astar::~Astar(void)
 }
 
 // Description: Returns the shortest path found
-vector<pair<int, int>> Astar::GetResultPath()
+CoordinatesVector Astar::GetResultPath()
 {
 	return this->resultPath;
 }
@@ -41,7 +41,7 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 	const int inOpenList = 1, inClosedList = 2;	// lists-related constants
 	int parentX, parentY, Gcost, index;
 	int ** whichList;	// used to record whether a cell is on the open list or on the closed list.
-	pair<int, int> ** parent;	// used to record parent of each cage
+	Coordinates ** parent;	// used to record parent of each cage
 	OpenListItem * openList;	// array holding open list items, which is maintained as a binary heap.
 	int numberOfOpenListItems;
 
@@ -64,9 +64,9 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 			whichList[i][j] = 0;
 	}
 
-	parent = new pair<int, int>* [mapHeight + 1];
+	parent = new Coordinates* [mapHeight + 1];
 	for (int i = 0; i < mapHeight; i++) {
-		parent[i] = new pair<int, int> [mapWidth + 1];
+		parent[i] = new Coordinates [mapWidth + 1];
 	}
 
 	openList = new OpenListItem [mapWidth*mapHeight+2];
@@ -175,7 +175,7 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 		int tmp;
 		while (true) {
 			// Save path in reverse order
-			resultPath.push_back(pair<int, int> (x, y));
+			resultPath.push_back(Coordinates (x, y));
 
 			if (x == startX && y == startY) break;
 
@@ -189,7 +189,7 @@ int Astar::FindPath(int startX, int startY, int targetX, int targetY, bool useHc
 
 		int size = (int) resultPath.size();
 		int amount = size/2;
-		pair<int, int> tmppair;
+		Coordinates tmppair;
 		for (int i = 0; i < amount; i++) {
 			tmppair = resultPath[size - i - 1];
 			resultPath[size - i - 1] = resultPath[i];

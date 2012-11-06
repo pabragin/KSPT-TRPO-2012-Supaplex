@@ -18,6 +18,6 @@ public:
 	void MoveRobot(_Command DIRECTION);
 
 private:
-	void BuildPathByCoord(vector<IntPair> * path);
+	void BuildPathByCoord(CoordinatesVector * path);
 };
 
