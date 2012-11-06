@@ -40,7 +40,7 @@ public:
 	bool isLiftOpened();			// returns the state of the lift
 
 	void UpdateMap();	// updates map according to the rules
-	bool isWalkable(size_t x, size_t y);
+	bool isWalkable(int x, int y);
 
 
 	Field operator = (const Field & field);

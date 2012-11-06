@@ -39,7 +39,7 @@ void Simulator::StartSimulation(vector<IntPair> waypoints)
 
 		//cout << "Saved global snapshot:" << endl;
 		//snapshot.back().SaveMap(cout);
-		size_t index = path.size();
+		//size_t index = path.size();
 
 		result = MoveRobot(mine.GetLambdas().at(i));
 
@@ -128,7 +128,7 @@ int Simulator::MoveRobot(IntPair target) {
 	vector<IntPair> resultPath;			// vector of coordinates of cells in found path
 	int result = 0;
 	const int nonexistent = 0, found = 1;		// path-related constants
-	const int inOpenList = 1, inClosedList = 2;	// lists-related constants
+	const int inClosedList = 2;	// lists-related constants
 	int parentX, parentY, Gcost;
 	int ** whichList;			// used to record whether a cell is on the open list or on the closed list.
 	IntPair ** parent;	// used to record parent of each cage
