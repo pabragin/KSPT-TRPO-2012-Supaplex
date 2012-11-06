@@ -3,7 +3,10 @@
 
 #include "Game.h"
 
-char filename[] = "..//IO files//input15.txt";
+const int iterations = 1;
+
+void start(istream & sin);
+
 
 int main(int argc, char* argv[])
 {
@@ -26,4 +29,11 @@ int main(int argc, char* argv[])
 	}
 
 	return 0;
+}
+
+void start(istream & sin) {
+	Game game;
+	if (game.Init(sin) != -1) {
+		game.Solve(iterations);
+	}
 }
