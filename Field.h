@@ -4,12 +4,12 @@
 
 class Field
 {
-	size_t mapWidth;
-	size_t mapHeight;
-	_MineObject ** map;
-	IntPair robot;
-	vector<IntPair> lambdas;
-	IntPair lift;
+	int mapWidth;
+	int mapHeight;
+	char ** map;
+	Coordinates robot;
+	CoordinatesVector lambdas;
+	Coordinates lift;
 	bool liftIsOpen;
 	bool robotIsDead;
 
@@ -34,9 +34,9 @@ public:
 	int GetWidth();
 	int GetHeight();
 	char ** GetMap();				// returns pointer to map
-	IntPair GetRobot();		// returns robot coordinates
-	vector<IntPair> GetLambdas();		// returns list of lambda's coordinates for all lambdas on map
-	IntPair GetLift();					// returns lift coordinates
+	Coordinates GetRobot();		// returns robot coordinates
+	CoordinatesVector GetLambdas();		// returns list of lambda's coordinates for all lambdas on map
+	Coordinates GetLift();					// returns lift coordinates
 	bool isLiftOpened();			// returns the state of the lift
 
 	void UpdateMap();	// updates map according to the rules
