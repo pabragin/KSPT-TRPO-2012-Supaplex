@@ -41,7 +41,7 @@ int Field::LoadMap(istream &sin)
 
 	vector<string> buf;
 	string str;
-	unsigned int width = 0;
+	size_t width = 0;
 
 	// Counting mine's dimension
 	while (!sin.eof()) {
@@ -69,9 +69,9 @@ int Field::LoadMap(istream &sin)
 			if (map[i][j] == ROBOT) {				// remembering robot coordinates
 				robot.first = i;
 				robot.second = j;
-			} else if (map[i][j] == '\\')
-				lambdas.push_back(Coordinates(i, j));	// filling lambdas's list
-			else if (map[i][j] == 'L') {		// remembering closed lift coordinates
+			} else if (map[i][j] == LAMBDA)
+				lambdas.push_back(IntPair(i, j));		// filling lambdas's list
+			else if (map[i][j] == CLOSED_LIFT) {	// remembering closed lift coordinates
 				lift.first = i;
 				lift.second = j;
 			} else if (map[i][j] == OPENED_LIFT) {	// remembering open lift coordinates
@@ -168,19 +168,19 @@ char ** Field::GetMap()
 }
 
 // Description: Returns robot coordinates
-Coordinates Field::GetRobot()
+IntPair Field::GetRobot()
 {
 	return this->robot;
 }
 
 // Description: Returns list of lambda's coordinates for all lambdas on map
-CoordinatesVector Field::GetLambdas()
+vector<IntPair> Field::GetLambdas()
 {
 	return this->lambdas;
 }
 
 // Description: Returns lift coordinates
-Coordinates Field::GetLift()
+IntPair Field::GetLift()
 {
 	return this->lift;
 }
@@ -289,4 +289,24 @@ bool Field::isWalkable(int x, int y)																						// TBD: add some euris
 	// Robot succeeds in all other cases.
 	// I.e. there is an earth, lambda or an open lift in the cage or the cage is empty.
 	return true;
+}
+
+Field Field::operator = (const Field & field)
+{
+	mapWidth = field.mapWidth;
+	mapHeight = field.mapHeight;
+	robot = field.robot;
+	lambdas = field.lambdas;
+	lift = field.lift;
+	liftIsOpen = field.liftIsOpen;
+
+	map = new _MineObject * [field.mapHeight];
+	for (size_t i = 0; i < field.mapHeight; i++) {
+		map[i] = new _MineObject [field.mapWidth];
+		for (size_t j = 0; j < field.mapWidth; j++) {
+			map[i][j] = field.map[i][j];
+		}
+	}
+
+	return *this;
 }

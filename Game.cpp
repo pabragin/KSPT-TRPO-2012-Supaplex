@@ -26,15 +26,19 @@ int Game::Init(istream &sin)
 
 void Game::Solve(const int & iterations)
 {
-	TSPSolver solver(& this->map);
-	solver.Solve();
-	//int tourSize = solver.GetTour().size(); // Why was this here?
+	TSPSolver solver(& this->mine);
+	solver.Solve(iterations);
 
-  CoordinatesVector tourPath = solver.GetTourPath();
-	BuildPathByCoord(&tourPath);
+	Simulator sim(this->mine);
+	sim.StartSimulation(solver.GetNodes());
+
+	//ofstream fout("..//IO files//output.txt", ios::app);
+
+	vector<IntPair> path = sim.GetPath();
+	BuildPathByCoord(&path);
 
 	for (size_t i = 0; i < trace.size(); i++) {
-		cout << trace[i] << " ";
+		cout << trace[i];
 	}
 	cout << endl;
 
@@ -85,7 +89,7 @@ void Game::MoveRobot(_Command COMMAND)
 }
 
 // Returns trace for the robot, like 'RRRLLLLWLLA'
-void Game::BuildPathByCoord(CoordinatesVector * path)
+void Game::BuildPathByCoord(vector<IntPair> * path)
 {
 	int x = mine.GetRobot().first;
 	int y = mine.GetRobot().second;

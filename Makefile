@@ -1,13 +1,11 @@
-CC=gcc
+CC=g++
 CFLAGS=-Wall
 OBJDIR=obj
 NAME=Supaplex
 RM=rm
 
-SRCS=Astar.cpp Field.cpp Game.cpp OpenListItem.cpp Supaplex.cpp \
-	TSPSolver.cpp stdafx.cpp
-
-LIBS=-lstdc++
+SRCS=Simulator.cpp Field.cpp Game.cpp OpenListItem.cpp Supaplex.cpp \
+TSPSolver.cpp stdafx.cpp
 
 OBJS:=$(SRCS:.cpp=.o)
 OBJS:=$(addprefix $(OBJDIR)/,$(OBJS))
