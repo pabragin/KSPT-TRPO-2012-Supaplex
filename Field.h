@@ -26,6 +26,7 @@ public:
 	void ClearLambdas();
 	void AddLambda(IntPair lambda);
 	void PopBackLambda();
+	void EraseLambda(IntPair lambda);
 	int FindLambda(IntPair lambda);
 
 	_MineObject GetObject(size_t x, size_t y);
@@ -38,6 +39,7 @@ public:
 	vector<IntPair> GetLambdas();		// returns list of lambda's coordinates for all lambdas on map
 	IntPair GetLift();					// returns lift coordinates
 	bool isLiftOpened();			// returns the state of the lift
+	bool IsRobotDead();
 
 	void UpdateMap();	// updates map according to the rules
 	bool isWalkable(int x, int y);

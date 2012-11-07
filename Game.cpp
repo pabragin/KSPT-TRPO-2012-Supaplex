@@ -6,6 +6,8 @@ Game::Game(void)
 {
 	score = 0;
 	moves = 0;
+	lambdas_collected = 0;
+	game_result = 0;
 }
 
 
@@ -21,6 +23,7 @@ int Game::Init(istream &sin)
 
 	score = 0;
 	moves = 0;
+	lambdas_collected = 0;
 	trace.clear();
 
 	return 0;
@@ -42,6 +45,11 @@ int Game::GetMoves(void)
 vector<_Command> Game::GetTrace(void)
 {
 	return this->trace;
+}
+
+_GameResult Game::GetResult()
+{
+	return this->game_result;
 }
 
 void Game::Solve(const int & iterations)
@@ -69,7 +77,6 @@ void Game::MoveRobot(_Command COMMAND)
 {
 	int xold = mine.GetRobot().first;
 	int yold = mine.GetRobot().second;
-	moves++;//инкркментируем счетчик ходов
 	int x = xold, y = yold;
 
 	switch (COMMAND) {
@@ -85,7 +92,11 @@ void Game::MoveRobot(_Command COMMAND)
 	case DOWN:
 		x++;
 		break;
+	case ABORT:
+		UpdateScore(false, true);
+		game_result = ABORT_ESCAPE;
 	default:
+		moves++;
 		return;
 	}
 
@@ -96,11 +107,14 @@ void Game::MoveRobot(_Command COMMAND)
 	if (mine.isWalkable((int) x, (int) y)) {
 		// If there is a stone in this cage
 		if (mine.GetObject(x, y) == STONE) {
-			if (COMMAND == RIGHT) {				// then, if robot is to the left of the stone
-				mine.SetObject(x, y + 1, STONE);
-			} else if (COMMAND == LEFT) {			// otherwise, if robot is to the right of the stone
-				mine.SetObject(x, y - 1, STONE);
-			}
+			PushStone(COMMAND);
+		} else if (mine.GetObject(x, y) == LAMBDA) {
+			lambdas_collected++;
+			mine.EraseLambda(IntPair(x, y));
+			UpdateScore(true);
+		} else if (mine.GetObject(x, y) == OPENED_LIFT) {
+			UpdateScore(false, false, true);
+			game_result = LIFT_ESCAPE;
 		}
 
 		mine.SetObject(xold, yold, EMPTY);
@@ -108,6 +122,34 @@ void Game::MoveRobot(_Command COMMAND)
 		mine.SetRobot(x, y);
 	}
 	mine.UpdateMap();
+	
+	if (mine.IsRobotDead()) game_result = DEATH_ESCAPE;
+	moves++;
+}
+
+void Game::PushStone(_Command DIRECTION)
+{
+	int x = mine.GetRobot().first;
+	int y = mine.GetRobot().second;
+	if (DIRECTION == RIGHT) {				// then, if robot is to the left of the stone
+		mine.SetObject(x, y + 2, STONE);
+	} else if (DIRECTION == LEFT) {			// otherwise, if robot is to the right of the stone
+		mine.SetObject(x, y - 2, STONE);
+	}
+}
+
+
+void Game::UpdateScore(bool lambda_collected, bool escape_by_abort, bool escape_by_lift)
+{
+	if (lambda_collected) {
+		score += LAMBDA_COST;
+	} else if (escape_by_abort) {
+		score += lambdas_collected * ABORT_COST;
+		return;
+	} else if (escape_by_lift) {
+		score += lambdas_collected * LIFT_COST;
+	}
+	score += MOVE_COST;
 }
 
 // Returns trace for the robot, like 'RRRLLLLWLLA'
