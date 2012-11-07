@@ -3,6 +3,8 @@
 #include <cstring>
 #include <string>
 #include <stdio.h>
+#include "Game.h"
+#include "stdafx.h"
 
 using namespace std;
 
@@ -11,6 +13,8 @@ class GUI
 	public:
 		GUI();
 		~GUI();
+		Game game;
+		int NewGame(char *FileName);
 		int current_window;//0-nothing, 1-game_win, 2-help_hame_win, 3-about_game_win, 4-game_win with commands window
 		void draw_map(char **map, int column, int row, WINDOW *game_win);//draw map
 		void draw_points(int Score, int Moves, int Lambdas, const char *Mov, WINDOW **frames);//draw current Score, Moves, Lambdas, 
@@ -39,6 +43,7 @@ class GUI
 		WINDOW **draw_enter_commands();
 		int enter_commands_line(WINDOW **items);
 		int input_Line();
+		void start(istream & sin);
 }; 
 
 

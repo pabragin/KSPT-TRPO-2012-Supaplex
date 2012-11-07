@@ -5,6 +5,7 @@
 Game::Game(void)
 {
 	score = 0;
+	moves = 0;
 }
 
 
@@ -19,9 +20,28 @@ int Game::Init(istream &sin)
 		return -1;
 
 	score = 0;
+	moves = 0;
 	trace.clear();
 
 	return 0;
+}
+
+Field Game::GetField(void)
+{
+	return this->mine;
+}
+
+int Game::GetScore(void)
+{
+	return this->score;
+}
+int Game::GetMoves(void)
+{
+	return this->moves;
+}
+vector<_Command> Game::GetTrace(void)
+{
+	return this->trace;
 }
 
 void Game::Solve(const int & iterations)
@@ -49,6 +69,7 @@ void Game::MoveRobot(_Command COMMAND)
 {
 	int xold = mine.GetRobot().first;
 	int yold = mine.GetRobot().second;
+	moves++;//инкркментируем счетчик ходов
 	int x = xold, y = yold;
 
 	switch (COMMAND) {
@@ -86,6 +107,7 @@ void Game::MoveRobot(_Command COMMAND)
 		mine.SetObject(x, y, ROBOT);
 		mine.SetRobot(x, y);
 	}
+	mine.UpdateMap();
 }
 
 // Returns trace for the robot, like 'RRRLLLLWLLA'

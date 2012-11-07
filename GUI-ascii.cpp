@@ -32,7 +32,8 @@ GUI::GUI(){
 		delete_menu(menu_items, 6);
 		if (selected_from_m==0){
 			current_window=1;
-                	resize_refresh();
+			NewGame("contest1.mine");
+            resize_refresh();
 		}
 	}
 	else if (key==KEY_F(2)) {
@@ -61,16 +62,69 @@ GUI::~GUI()
 {
 }
 
+void GUI::start(istream & sin) {
+	if (game.Init(sin) == -1) 
+	{
+		printf("Initialization Fail");
+	}
+}
+
+int GUI::NewGame(char *FileName)
+{
+	ifstream fin;
+	fin.open(FileName);
+	if (!fin.is_open()) 
+	{
+		cout << "Can't open file.\n" << endl;
+		return -1;
+	}
+	start(fin);
+	return 0;
+}
+
 bool GUI::hotkeys(int key){
 	switch (key){
+		case 259://up button
+		if(current_window==1)
+		{
+			game.MoveRobot(UP);
+			resize_refresh();
+			return true;
+			break;
+		}
+		case 258://down button
+		if(current_window==1)
+		{
+			game.MoveRobot(DOWN);
+			resize_refresh();
+			return true;
+			break;
+		}
+		case 260://left button
+		if(current_window==1)
+		{
+			game.MoveRobot(LEFT);
+			resize_refresh();
+			return true;
+			break;
+		}
+		case 261://right button
+		if(current_window==1)
+		{
+			game.MoveRobot(RIGHT);
+			resize_refresh();
+			return true;
+			break;
+		}
 	  case 14://ctrl-n
 	    current_window=1;
 	    str="";
 	    strC="";
+	    NewGame("contest1.mine");
 	    resize_refresh();
 		return true;
 	    break;
-	  case 8://ctrl-h
+	  case 263://ctrl-h
 	    current_window=2;
 	    resize_refresh();
 	    return true;
@@ -197,50 +251,44 @@ void GUI::resize_refresh(){
 	x = getmaxx(stdscr);//terminal size
 	y = getmaxy(stdscr);
 	werase(stdscr);
-	if(x>5 && y>10){
-	draw_game_name();
-	draw_menubar();
-	if (current_window==1){
-		WINDOW **gw = draw_game_win();
-		string s= str;
-		draw_points(100, 10, 1, s.c_str(), gw);
-		char **map;
-		map = (char**)malloc(9);
-		map[0] = "#R#";
-		map[1] = "###";
-		map[2] = "#L#";
-		draw_map(map, 3, 3, gw[0]);
-		touchwin(stdscr);
-		refresh();
+	if(x>20 && y>10)
+	{
+		draw_game_name();
+		draw_menubar();
+		if (current_window==1)
+		{
+			WINDOW **gw = draw_game_win();
+			string s= str;
+			draw_points(game.GetScore(), game.GetMoves(), 1, s.c_str(), gw);
+			draw_map(game.GetField().GetMap(), game.GetField().GetWidth()-1, game.GetField().GetHeight()-1, gw[0]);
+			touchwin(stdscr);
+			refresh();
 		}
-	else if (current_window==2){
-		game_win=subwin(stdscr,y-5,x-4,4,2);//size of game window
-		wbkgd(game_win,COLOR_PAIR(2));
-		help_game_win();
-		touchwin(stdscr);
-		refresh();
-	}
-	else if (current_window==3){
-		game_win=subwin(stdscr,y-5,x-4,4,2);//size of game window
-		wbkgd(game_win,COLOR_PAIR(2));
-		about_game_win();
-		touchwin(stdscr);
-		refresh();
-	}
-	else if (current_window==4){
-		WINDOW **gw = draw_game_win();
-		string s= str;
-		draw_points(100, 10, 1, s.c_str(), gw);
-		char **map;
-		map = (char**)malloc(9);
-		map[0] = "#R#";
-		map[1] = "###";
-		map[2] = "#L#";
-		draw_map(map, 3, 3, gw[0]);
-		touchwin(stdscr);
-		refresh();
-		draw_enter_commands();
-		input_Line();
+		else if (current_window==2){
+			game_win=subwin(stdscr,y-5,x-4,4,2);//size of game window
+			wbkgd(game_win,COLOR_PAIR(2));
+			help_game_win();
+			touchwin(stdscr);
+			refresh();
+		}
+		else if (current_window==3)
+		{
+			game_win=subwin(stdscr,y-5,x-4,4,2);//size of game window
+			wbkgd(game_win,COLOR_PAIR(2));
+			about_game_win();
+			touchwin(stdscr);
+			refresh();
+		}
+		else if (current_window==4)
+		{
+			WINDOW **gw = draw_game_win();
+			string s= str;
+			draw_points(game.GetScore(), game.GetMoves(), 1, s.c_str(), gw);
+			draw_map(game.GetField().GetMap(), game.GetField().GetWidth()-1, game.GetField().GetHeight()-1, gw[0]);
+			touchwin(stdscr);
+			refresh();
+			draw_enter_commands();
+			input_Line();
 		}
 	}
 	
@@ -257,6 +305,10 @@ void GUI::init_curses(){
 	init_pair(6,COLOR_YELLOW,COLOR_WHITE);
 	init_pair(7,COLOR_YELLOW,COLOR_BLUE);
 	init_pair(8,COLOR_WHITE,COLOR_BLACK);
+	init_pair(9,COLOR_BLACK,COLOR_WHITE);
+	init_pair(10,COLOR_GREEN,COLOR_WHITE);
+	init_pair(11,COLOR_MAGENTA,COLOR_WHITE);
+	init_pair(12,COLOR_CYAN,COLOR_WHITE);
     curs_set(0);
     noecho();
     keypad(stdscr,TRUE);
@@ -305,14 +357,38 @@ WINDOW **GUI::draw_game_win(){
 	return frames;
 }
 
-void GUI::draw_map(char **map, int column,int row, WINDOW *game_win){
-	int i = 0;
-	for(i=0; i<row; i++)
+void GUI::draw_map(char **map, int column,int row, WINDOW *game_win)
+{
+	WINDOW *gameWin=subwin(game_win,y-10,x-22,5,3);
+	wbkgd(gameWin,COLOR_PAIR(2));
+	for(int i=0; i<=row; i++)
 	{	
-		mvwprintw(game_win, i+1, 1, map[i]);
+		for(int j=0; j<=column; j++)
+		{
+			switch (map[i][j]){
+			case 'R':
+				mvwinsch(gameWin, i, j, map[i][j]|COLOR_PAIR(3));
+				break;
+			case '*':
+				mvwinsch(gameWin, i, j, map[i][j]|COLOR_PAIR(12));
+				break;
+			case '.':
+				mvwinsch(gameWin, i, j, map[i][j]|COLOR_PAIR(11));
+				break;
+			case '\\':
+				mvwinsch(gameWin, i, j, map[i][j]|COLOR_PAIR(10));
+				break;
+			case 'L':
+				mvwinsch(gameWin, i, j, map[i][j]|COLOR_PAIR(9));
+				break;
+			default:
+				mvwinsch(gameWin, i, j, map[i][j]);
+				break;
+			}
+		}
 	}
 	touchwin(stdscr);
-        refresh();
+    refresh();
 }
 
 void GUI::draw_points(int Score, int Moves, int Lambdas, const char *Mov, WINDOW **frames){
@@ -336,7 +412,6 @@ void GUI::draw_points(int Score, int Moves, int Lambdas, const char *Mov, WINDOW
 }
 
 void GUI::about_game_win(){
-	//werase(game_win);
 	WINDOW *f=subwin(game_win,y-5,x-6,4,3);//игровое поле
 	wbkgd(f,COLOR_PAIR(2));
 	box(f,ACS_VLINE,ACS_HLINE);
@@ -349,12 +424,9 @@ void GUI::about_game_win(){
 	waddstr(f,"Bragin Pavel");
 	wmove(f,4,1);
 	waddstr(f,"Hozyainov Ivan");
-	wmove(f,5,1);
-	waddstr(f,"Yarov Maxim");
 }
 
 void GUI::help_game_win(){
-	//werase(field);
 	WINDOW *f=subwin(game_win,y-5,x-6,4,3);//игровое поле
 	wbkgd(f,COLOR_PAIR(2));
 	box(f,ACS_VLINE,ACS_HLINE);
@@ -459,7 +531,7 @@ int GUI::scroll_menu(WINDOW **items){
 int GUI::scroll_help(WINDOW **items){
         int key;
         int selected=0;
-	int count =2;
+		int count =2;
         while (1) {
                 key=getch();
                 if (key==KEY_DOWN || key==KEY_UP) {
@@ -511,17 +583,17 @@ int GUI::scroll_help(WINDOW **items){
         }
 }
 WINDOW **GUI::draw_menu(){
-        int i;
-        WINDOW **items;
-        items=(WINDOW **)malloc(6*sizeof(WINDOW *));
+    int i;
+    WINDOW **items;
+    items=(WINDOW **)malloc(6*sizeof(WINDOW *));
 
-        items[0]=newwin(7,19,1,0);
-        wbkgd(items[0],COLOR_PAIR(2));
-        box(items[0],ACS_VLINE,ACS_HLINE);
-        items[1]=subwin(items[0],1,17,2,1);
-        items[2]=subwin(items[0],1,17,3,1);
-        items[3]=subwin(items[0],1,17,4,1);
-        items[4]=subwin(items[0],1,17,5,1);
+    items[0]=newwin(7,19,1,0);
+    wbkgd(items[0],COLOR_PAIR(2));
+    box(items[0],ACS_VLINE,ACS_HLINE);
+    items[1]=subwin(items[0],1,17,2,1);
+    items[2]=subwin(items[0],1,17,3,1);
+    items[3]=subwin(items[0],1,17,4,1);
+	items[4]=subwin(items[0],1,17,5,1);
 	items[5]=subwin(items[0],1,17,6,1);
 	waddstr(items[1]," ew game");
 	wattron(items[2],COLOR_PAIR(6));
@@ -540,13 +612,13 @@ WINDOW **GUI::draw_menu(){
 	waddstr(items[5],"E");
 	wattroff(items[5],COLOR_PAIR(6));
 	wprintw(items[5],"xit");
-        wbkgd(items[1],COLOR_PAIR(1));
+    wbkgd(items[1],COLOR_PAIR(1));
 	wmove(items[1], 0,0);
 	wattron(items[1],COLOR_PAIR(7));
 	waddstr(items[1],"N");
 	wattroff(items[1],COLOR_PAIR(7));
-        wrefresh(items[0]);
-        return items;
+    wrefresh(items[0]);
+    return items;
 }
 WINDOW **GUI::draw_menu_help(){
         int i;
@@ -559,15 +631,15 @@ WINDOW **GUI::draw_menu_help(){
         items[1]=subwin(items[0],1,17,2,16);
         items[2]=subwin(items[0],1,17,3,16);
         waddstr(items[1]," elp_contents");
-	wattron(items[2],COLOR_PAIR(6));
-	waddstr(items[2],"A");
-	wattroff(items[2],COLOR_PAIR(6));
-	wprintw(items[2],"bout");
+		wattron(items[2],COLOR_PAIR(6));
+		waddstr(items[2],"A");
+		wattroff(items[2],COLOR_PAIR(6));
+		wprintw(items[2],"bout");
         wbkgd(items[1],COLOR_PAIR(1));
-	wmove(items[1], 0,0);
-	wattron(items[1],COLOR_PAIR(7));
-	waddstr(items[1],"H");
-	wattroff(items[1],COLOR_PAIR(7));
+		wmove(items[1], 0,0);
+		wattron(items[1],COLOR_PAIR(7));
+		waddstr(items[1],"H");
+		wattroff(items[1],COLOR_PAIR(7));
         wrefresh(items[0]);
         return items;
 }
@@ -582,8 +654,8 @@ WINDOW **GUI::draw_enter_commands(){
         items[1]=subwin(items[0],1,30,y/2-2,4);
         items[2]=subwin(items[0],3,x-8,y/2-1,4);
         waddstr(items[1],"Please, enter commands:");
-	wbkgd(items[2],COLOR_PAIR(8));
-	commands_line=items[2];
+		wbkgd(items[2],COLOR_PAIR(8));
+		commands_line=items[2];
         wrefresh(items[0]);
         return items;
 }

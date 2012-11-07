@@ -4,8 +4,7 @@ OBJDIR=obj
 NAME=Supaplex
 RM=rm
 
-SRCS=Simulator.cpp Field.cpp Game.cpp OpenListItem.cpp Supaplex.cpp \
-TSPSolver.cpp stdafx.cpp
+SRCS=Simulator.cpp Field.cpp Game.cpp OpenListItem.cpp main.cpp TSPSolver.cpp stdafx.cpp
 
 OBJS:=$(SRCS:.cpp=.o)
 OBJS:=$(addprefix $(OBJDIR)/,$(OBJS))
