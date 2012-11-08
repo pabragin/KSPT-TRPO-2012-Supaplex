@@ -25,6 +25,7 @@ int Game::Init(istream &sin)
 	moves = 0;
 	lambdas_collected = 0;
 	trace.clear();
+	game_result=0;
 
 	return 0;
 }
@@ -55,7 +56,10 @@ _GameResult Game::GetResult()
 {
 	return this->game_result;
 }
-
+void Game::SetGameResult(_GameResult result)
+{
+	game_result=result;
+}
 void Game::Solve(const int & iterations)
 {
 	TSPSolver solver(& this->mine);
@@ -69,10 +73,10 @@ void Game::Solve(const int & iterations)
 	vector<IntPair> path = sim.GetPath();
 	BuildPathByCoord(&path);
 
-	for (size_t i = 0; i < trace.size(); i++) {
+	/*for (size_t i = 0; i < trace.size(); i++) {
 		cout << trace[i];
 	}
-	cout << endl;
+	cout << endl;*/
 
 	//fout.close();
 }

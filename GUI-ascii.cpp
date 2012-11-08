@@ -48,6 +48,24 @@ GUI::GUI(){
 			current_window=0;
 			resize_refresh();
 		}
+		else if(selected_from_m==3)
+		{
+			str="";
+			strC="";
+			game.Solve(1);
+			for(int i=0; i<game.GetTrace().size(); i++)
+				{
+					game.MoveRobot(game.GetTrace()[i]);
+					str+=game.GetTrace()[i];
+					resize_refresh();
+					usleep(40000);
+				}
+			//if(NewGame(Files[selectedMap].c_str())!=-1)
+			current_window=1;
+			//else
+			//current_window=0;
+			resize_refresh();
+		}
 	}
 	else if (key==KEY_F(2)) 
 	{
@@ -66,7 +84,7 @@ GUI::GUI(){
 		}
 	}
 	hotkeys(key);
-	printw("%i",key);//print number of char
+	//printw("%i",key);//print number of char
 	if (key==KEY_RESIZE){
 	  resize_refresh();
 	}
@@ -152,6 +170,13 @@ void GUI::hotkeys(int key){
 	    str="";
 	    strC="";
 	    resize_refresh();
+	    break;
+	  case 18://ctrl-r
+	    if(NewGame(Files[selectedMap].c_str())!=-1)
+			current_window=1;
+			else
+			current_window=0;
+			resize_refresh();
 	    break;
 	  case 263://ctrl-h
 	    current_window=2;

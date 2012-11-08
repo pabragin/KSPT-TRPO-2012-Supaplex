@@ -37,6 +37,11 @@ Field::~Field(void)
 // Description: Loads map from file and fills Field's fields =)
 int Field::LoadMap(istream &sin)
 {
+	mapWidth = -1;
+	mapHeight = -1;
+	map = NULL;
+	liftIsOpen = false;
+	robotIsDead = false;
 	lambdas.clear();
 
 	vector<string> buf;
