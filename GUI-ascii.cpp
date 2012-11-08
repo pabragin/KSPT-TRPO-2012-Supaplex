@@ -42,28 +42,36 @@ GUI::GUI(){
 		{
 			str="";
 			strC="";
-			if(NewGame(Files[selectedMap].c_str())!=-1)
-			current_window=1;
-			else
-			current_window=0;
-			resize_refresh();
+			if(selectedMap!=-1)
+			{
+				if(NewGame(Files[selectedMap].c_str())!=-1)
+					current_window=1;
+				else
+					current_window=0;
+				resize_refresh();
+			}
 		}
 		else if(selected_from_m==3)
 		{
 			str="";
 			strC="";
-			game.Solve(1);
-			for(int i=0; i<game.GetTrace().size(); i++)
+			if(selectedMap!=-1)
+			{
+				if(NewGame(Files[selectedMap].c_str())!=-1)
 				{
-					game.MoveRobot(game.GetTrace()[i]);
-					str+=game.GetTrace()[i];
-					resize_refresh();
-					usleep(40000);
+					game.Solve(1);
+					for(int i=0; i<game.GetTrace().size(); i++)
+					{
+						game.MoveRobot(game.GetTrace()[i]);
+						str+=game.GetTrace()[i];
+						resize_refresh();
+						usleep(40000);
+					}
+					current_window=1;
 				}
-			//if(NewGame(Files[selectedMap].c_str())!=-1)
-			current_window=1;
-			//else
-			//current_window=0;
+				else
+				current_window=0;
+			}
 			resize_refresh();
 		}
 	}
@@ -174,11 +182,36 @@ void GUI::hotkeys(int key){
 	  case 18://ctrl-r
 		str="";
 	    strC="";
-	    if(NewGame(Files[selectedMap].c_str())!=-1)
-			current_window=1;
+	    if(selectedMap!=-1)
+	    {
+			if(NewGame(Files[selectedMap].c_str())!=-1)
+				current_window=1;
+				else
+				current_window=0;
+		}
+		resize_refresh();
+	    break;
+	  case 15://ctrl-o
+	    str="";
+		strC="";
+		if(selectedMap!=-1)
+		{
+			if(NewGame(Files[selectedMap].c_str())!=-1)
+			{
+				game.Solve(1);
+				for(int i=0; i<game.GetTrace().size(); i++)
+				{
+					game.MoveRobot(game.GetTrace()[i]);
+					str+=game.GetTrace()[i];
+					resize_refresh();
+					usleep(40000);
+				}
+				current_window=1;
+			}
 			else
-			current_window=0;
-			resize_refresh();
+				current_window=0;
+		}
+		resize_refresh();
 	    break;
 	  case 263://ctrl-h
 	    current_window=2;
@@ -371,13 +404,17 @@ void GUI::resize_refresh(){
 			selectedMap=scroll_maps(menu_items);
 			if(selectedMap==-1)
 			{
+				current_window=0;
 				return;
 			}
-			//delete_menu(menu_items, 6);
-			if(NewGame(Files[selectedMap].c_str())!=-1)
-			current_window=1;
-			else
-			current_window=0;
+			delete_menu(menu_items, 6);
+			if(selectedMap!=-1)
+			{
+				if(NewGame(Files[selectedMap].c_str())!=-1)
+					current_window=1;
+				else
+					current_window=0;
+			}
 			resize_refresh();
 		}
 		else if (current_window==0)
@@ -428,16 +465,18 @@ WINDOW **GUI::draw_game_win(){
 	game_win=subwin(stdscr,y-5,x-4,4,2);//size of game window
 	wbkgd(game_win,COLOR_PAIR(2));
 	WINDOW **frames;
-	frames=(WINDOW **)malloc(3*sizeof(WINDOW *));
-	frames[0]=subwin(game_win,y-8,x-20,4,2);//игровое поле
+	frames=(WINDOW **)malloc(4*sizeof(WINDOW *));
+	frames[0]=subwin(game_win,y-10,x-20,4,2);//игровое поле
 	wbkgd(frames[0],COLOR_PAIR(2));
 	box(frames[0],ACS_VLINE,ACS_HLINE);
-	frames[1]=subwin(game_win,y-8,16,4,x-18);//очки
+	frames[1]=subwin(game_win,y-10,16,4,x-18);//очки
 	wbkgd(frames[1],COLOR_PAIR(2));
 	box(frames[1],ACS_VLINE,ACS_HLINE);
-	frames[2]=subwin(game_win,3,x-4,y-4,2);//ходы
+	frames[2]=subwin(game_win,3,x-4,y-6,2);//ходы
 	wbkgd(frames[2],COLOR_PAIR(2));
 	box(frames[2],ACS_VLINE,ACS_HLINE);
+	frames[3]=subwin(game_win,3,x-4,y-4,2);//hotkeys
+	wbkgd(frames[2],COLOR_PAIR(2));
 	wmove(frames[1],1,1);
 	wattron(frames[1],COLOR_PAIR(3));
     waddstr(frames[1],"Score:");
@@ -447,6 +486,10 @@ WINDOW **GUI::draw_game_win(){
 	waddstr(frames[1],"Lambdas:");
 	wmove(frames[2],1,1);
     waddstr(frames[2],"Trace:");
+    wmove(frames[3],1,1);
+    waddstr(frames[3],"Movements: Arrow keys; a-ABORT; w-WAIT; \"ctrl-k\" - command window");
+    wmove(frames[3],2,1);
+    waddstr(frames[3],"\"ctrl-o\" - solve; \"ctrl-n\" - new game;\"ctrl-r\" - reset.");
 	touchwin(stdscr);
 	refresh();
 	return frames;
@@ -454,7 +497,7 @@ WINDOW **GUI::draw_game_win(){
 
 void GUI::draw_map(char **map, int column,int row, WINDOW *game_win)
 {
-	WINDOW *gameWin=subwin(game_win,y-10,x-22,5,3);
+	WINDOW *gameWin=subwin(game_win,y-12,x-22,5,3);
 	wbkgd(gameWin,COLOR_PAIR(2));
 	for(int i=0; i<=row; i++)
 	{	
@@ -478,6 +521,9 @@ void GUI::draw_map(char **map, int column,int row, WINDOW *game_win)
 				break;
 			case 'O':
 				mvwinsch(gameWin, i, j, map[i][j]|COLOR_PAIR(9));
+				break;
+			case '@':
+				mvwinsch(gameWin, i, j, map[i][j]|A_BLINK);
 				break;
 			default:
 				mvwinsch(gameWin, i, j, map[i][j]);
@@ -568,9 +614,9 @@ int GUI::scroll_menu(WINDOW **items){
 				  waddstr(items[3],"M");
 				  wattroff(items[3],COLOR_PAIR(6));
 				  break;
-			  case 3: wmove(items[4], 0,0);
+			  case 3: wmove(items[4], 0,1);
 				  wattron(items[4],COLOR_PAIR(6));
-				  waddstr(items[4],"S");
+				  waddstr(items[4],"o");
 				  wattroff(items[4],COLOR_PAIR(6));
 				  break;
 			  case 4: wmove(items[5], 0,0);
@@ -602,9 +648,9 @@ int GUI::scroll_menu(WINDOW **items){
 				  waddstr(items[3],"M");
 				  wattroff(items[3],COLOR_PAIR(7));
 				  break;
-			  case 3: wmove(items[4], 0,0);
+			  case 3: wmove(items[4], 0,1);
 				  wattron(items[4],COLOR_PAIR(7));
-				  waddstr(items[4],"S");
+				  waddstr(items[4],"o");
 				  wattroff(items[4],COLOR_PAIR(7));
 				  break;
 			  case 4: wmove(items[5], 0,0);
@@ -740,10 +786,11 @@ WINDOW **GUI::draw_menu(){
 	waddstr(items[3],"M");
 	wattroff(items[3],COLOR_PAIR(6));
 	wprintw(items[3],"ap editor");
-	wattron(items[4],COLOR_PAIR(6));
 	waddstr(items[4],"S");
+	wattron(items[4],COLOR_PAIR(6));
+	waddstr(items[4],"o");
 	wattroff(items[4],COLOR_PAIR(6));
-	wprintw(items[4],"olve");
+	wprintw(items[4],"lve");
 	wattron(items[5],COLOR_PAIR(6));
 	waddstr(items[5],"E");
 	wattroff(items[5],COLOR_PAIR(6));
