@@ -172,6 +172,8 @@ void GUI::hotkeys(int key){
 	    resize_refresh();
 	    break;
 	  case 18://ctrl-r
+		str="";
+	    strC="";
 	    if(NewGame(Files[selectedMap].c_str())!=-1)
 			current_window=1;
 			else
@@ -283,10 +285,13 @@ int GUI::input_Line(){
 			{
 				for(int i=0; i<strC.size(); i++)
 				{
-					game.MoveRobot(strC[i]);
-					str+=strC[i];
-					resize_refresh();
-					usleep(40000);
+					if(game.GetResult()==0)
+					{
+						game.MoveRobot(strC[i]);
+						str+=strC[i];
+						resize_refresh();
+						usleep(40000);
+					}
 				}
 			}
 			return 0;
