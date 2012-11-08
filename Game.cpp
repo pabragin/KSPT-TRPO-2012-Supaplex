@@ -29,9 +29,9 @@ int Game::Init(istream &sin)
 	return 0;
 }
 
-Field Game::GetField(void)
+Field *Game::GetField(void)
 {
-	return this->mine;
+	return &this->mine;
 }
 
 int Game::GetScore(void)
@@ -41,6 +41,10 @@ int Game::GetScore(void)
 int Game::GetMoves(void)
 {
 	return this->moves;
+}
+int Game::GetCollectedLambdasNum(void)
+{
+	return this->lambdas_collected;
 }
 vector<_Command> Game::GetTrace(void)
 {
@@ -78,7 +82,6 @@ void Game::MoveRobot(_Command COMMAND)
 	int xold = mine.GetRobot().first;
 	int yold = mine.GetRobot().second;
 	int x = xold, y = yold;
-
 	switch (COMMAND) {
 	case RIGHT:
 		y++;
@@ -116,7 +119,9 @@ void Game::MoveRobot(_Command COMMAND)
 			UpdateScore(false, false, true);
 			game_result = LIFT_ESCAPE;
 		}
-
+		else {
+			UpdateScore();
+		}
 		mine.SetObject(xold, yold, EMPTY);
 		mine.SetObject(x, y, ROBOT);
 		mine.SetRobot(x, y);

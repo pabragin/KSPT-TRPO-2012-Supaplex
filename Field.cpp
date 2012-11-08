@@ -148,7 +148,7 @@ _MineObject Field::GetObject(size_t x, size_t y)
 	if (x < mapHeight && y < mapWidth)
 		return map[x][y];
 	else
-		return NULL;
+		return '\0';
 }
 
 void Field::SetObject(size_t x, size_t y, _MineObject OBJECT)

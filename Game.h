@@ -18,7 +18,7 @@ public:
 	Game(void);
 	~Game(void);
 
-	Field GetField();
+	Field *GetField();
 	int GetScore();
 	int GetMoves();
 	int GetCollectedLambdasNum();
