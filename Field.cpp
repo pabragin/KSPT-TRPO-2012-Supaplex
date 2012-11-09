@@ -37,6 +37,11 @@ Field::~Field(void)
 // Description: Loads map from file and fills Field's fields =)
 int Field::LoadMap(istream &sin)
 {
+	mapWidth = -1;
+	mapHeight = -1;
+	map = NULL;
+	liftIsOpen = false;
+	robotIsDead = false;
 	lambdas.clear();
 
 	vector<string> buf;
@@ -127,12 +132,20 @@ void Field::PopBackLambda()
 	lambdas.pop_back();
 }
 
+void Field::EraseLambda(IntPair lambda)
+{
+	int index = FindLambda(lambda);
+	if (index != -1) lambdas.erase(lambdas.begin() + index);
+}
+
 int Field::FindLambda(IntPair lambda)
 {
-	for (size_t i = 0; i < lambdas.size(); i++) {										// this is the worst method!!!
-		if (lambdas.at(i) == lambda) return i;
-	}
-	return -1;
+	int index = 0;
+	vector<IntPair>::iterator itr = find(lambdas.begin(), lambdas.end(), lambda);
+	if (itr == lambdas.end()) index = -1;
+	else index = distance(lambdas.begin(), itr);
+
+	return index;
 }
 
 _MineObject Field::GetObject(size_t x, size_t y)
@@ -140,7 +153,7 @@ _MineObject Field::GetObject(size_t x, size_t y)
 	if (x < mapHeight && y < mapWidth)
 		return map[x][y];
 	else
-		return NULL;
+		return '\0';
 }
 
 void Field::SetObject(size_t x, size_t y, _MineObject OBJECT)
@@ -189,6 +202,11 @@ IntPair Field::GetLift()
 bool Field::isLiftOpened()
 {
 	return this->liftIsOpen;
+}
+
+bool Field::IsRobotDead()
+{
+	return this->robotIsDead;
 }
 
 // Description: Updates map according to the rules

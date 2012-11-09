@@ -19,6 +19,11 @@ typedef pair<int, int> IntPair;
 
 typedef char _MineObject;
 typedef char _Command;
+typedef int _GameResult;
+
+#define DEATH_ESCAPE 1
+#define ABORT_ESCAPE 2
+#define LIFT_ESCAPE 3
 
 #define ROBOT 'R'
 #define STONE '*'
@@ -35,5 +40,10 @@ typedef char _Command;
 #define DOWN 'D'
 #define WAIT 'W'
 #define ABORT 'A'
+
+#define MOVE_COST -1
+#define LAMBDA_COST 25
+#define ABORT_COST 25
+#define LIFT_COST 50
 
 // TODO: reference additional headers your program requires here
