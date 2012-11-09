@@ -19,6 +19,8 @@ vector<IntPair> Simulator::GetPath()
 
 void Simulator::StartSimulation(vector<IntPair> waypoints)
 {
+	//cout << "Lambdas: " << waypoints.size() - 2 << endl;
+
 	mine.ClearLambdas();
 	for (int i = waypoints.size() - 1; i > 0; i--) {							// waypoint #0 is a Robot !!!
 		mine.AddLambda(waypoints.at(i));
@@ -26,8 +28,6 @@ void Simulator::StartSimulation(vector<IntPair> waypoints)
 
 	int result;
 	missedLambdas.clear();
-
-	//mine.SaveMap(cout);														// testing print to stdout
 
 	for (int i = mine.GetLambdas().size() - 1; i >= 0; i--) {					// waypoint #0 is a Robot !!!
 		if (FindUnexpectedLambda(i)) {
@@ -41,9 +41,11 @@ void Simulator::StartSimulation(vector<IntPair> waypoints)
 		//snapshot.back().SaveMap(cout);
 		//size_t index = path.size();
 
-		result = MoveRobot(mine.GetLambdas().at(i));
+		result = MoveRobotToTarget(mine.GetLambdas().at(i));
 
-		if (result == -1) {
+		if (result == 0) {
+			if (snapshot.empty()) break;
+			
 			LoadSnapshot();
 
 			//cout << "Loaded global snapshot:" << endl;
@@ -54,16 +56,21 @@ void Simulator::StartSimulation(vector<IntPair> waypoints)
 		}
 
 		mine.PopBackLambda();
+		
 	}
 
-	//mine.SaveMap(cout);
-
-	//mine = f;
-	//for (int i = 0; i < path.size(); i++) {
-	//	Step(path[i].first, path[i].second);
-	//	UpdateMap();
-	//	mine.SaveMap(cout);
+	//int n = mine.GetLambdas().size();
+	//bool finished = true;
+	//if (n > 0) {
+	//	n--;
+	//	finished = false;
 	//}
+	//cout << endl;
+	//cout << "Map is finished: " << finished << endl;
+	//cout << "Lambdas left: " << n << endl;
+	//cout << "Moves: " << this->path.size() - 1 << endl;
+
+	//mine.SaveMap(cout);
 }
 
 // Description: Updates map according to the rules
@@ -84,7 +91,7 @@ bool Simulator::IsLiftBlocked() {			// is lift blocked? lets see (will return tr
     int robotX = mine.GetRobot().first;     // some variables for sintax sugar
 	int robotY = mine.GetRobot().second;
     int liftX = mine.GetLift().first;
-    int liftY = mine.GetLift().second;
+	int liftY = mine.GetLift().second;
 
 	if (!mine.isWalkable(liftX - 1, liftY) && !mine.isWalkable(liftX + 1, liftY) && 
 		!mine.isWalkable(liftX, liftY - 1) && !mine.isWalkable(liftX, liftY + 1)) {
@@ -115,7 +122,7 @@ bool Simulator::IsLiftBlocked() {			// is lift blocked? lets see (will return tr
 
 // Using A star algorithm modified for taking care about dynamic changes on map
 // At the begining - add reaction on the robot death
-int Simulator::MoveRobot(IntPair target) {
+int Simulator::MoveRobotToTarget(IntPair target) {
 
 	const int infinity = 1000000;	// infinity Hcost of the cell where robot dies
 	int numberOfClosedListItems = 0;
@@ -133,7 +140,7 @@ int Simulator::MoveRobot(IntPair target) {
 	int ** whichList;			// used to record whether a cell is on the open list or on the closed list.
 	IntPair ** parent;	// used to record parent of each cage
 	OpenListItem * openList;	// array holding open list items, which is maintained as a binary heap.
-	int numberOfOpenListItems;
+	int numberOfOpenListItems = 0;
 
 // ****************************
 
@@ -150,7 +157,7 @@ int Simulator::MoveRobot(IntPair target) {
 			whichList[i][j] = 0;
 	}
 
-	parent = new IntPair* [mine.GetHeight() + 1];
+	parent = new IntPair * [mine.GetHeight() + 1];
 	for (int i = 0; i < mine.GetHeight(); i++) {
 		parent[i] = new IntPair [mine.GetWidth() + 1];
 	}
@@ -171,13 +178,13 @@ int Simulator::MoveRobot(IntPair target) {
 
 
 // 2. Add the starting cell to the open list.
-
+	
 	numberOfOpenListItems = 1;
 	openList[1].SetX(startX);	// assign it as the top item in the binary heap
 	openList[1].SetY(startY);
 	openList[1].SetGcost(0);	// reset starting cell's G value to 0
 	parent[startX][startY] = IntPair (startX, startY);
-
+	
 
 // ****************************
 
@@ -187,6 +194,44 @@ int Simulator::MoveRobot(IntPair target) {
 
 
 // 3. Do it until the path is found or recognized as nonexistent.
+
+
+	/*
+	result = Step(IntPair(startX, startY), 0, openList, numberOfOpenListItems, whichList, parent, 
+			target, closedList, numberOfClosedListItems);
+
+	if (result == found) {
+		// Working backwards from the target to the start by checking each cell's parent.
+		int x = target.first, y = target.second;
+		IntPair tmp;
+		while (true) {
+			// Save path in reverse order
+			resultPath.push_back(IntPair (x, y));
+
+			if (x == startX && y == startY) break;
+
+			// Look up the parent of the current cell
+			tmp = parent[x][y].front();
+			parent[x][y].erase(parent[x][y].begin());
+			y = tmp.second;
+			x = tmp.first;
+		} 
+
+		// Saving founded path
+		for (int i = resultPath.size() - 2; i >= 0; i--) {
+			path.push_back(resultPath[i]);
+
+			int index = mine.FindLambda(path.back());
+			if (index == -1) index = FindMissedLambda(path.back());
+			if (index != -1) unexpectedLambdas.push_back(index);
+		}
+		
+	} //else return -1;
+
+	*/
+
+
+	
 
 
 // 3.0 Analyze target cell's position
@@ -206,9 +251,7 @@ int Simulator::MoveRobot(IntPair target) {
 	// ###
 	// 
 
-	IsDeadLock(target.first, target.second);
-
-
+	// IsDeadLock(target.first, target.second);
 
 	while (true) {
 	
@@ -229,7 +272,7 @@ int Simulator::MoveRobot(IntPair target) {
 				// loading field state relating to this cell's parent (from which robot makes a step to this cell)
 				mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];
 				// making a step and updating map
-				bool stoneMoved = Step(openList[1].GetX(), openList[1].GetY());
+				bool stoneMoved = MoveRobot(openList[1].GetX(), openList[1].GetY());
 
 				if (stoneMoved && IsLiftBlocked()) {
 					openList[1].SetHcost(infinity);
@@ -256,10 +299,10 @@ int Simulator::MoveRobot(IntPair target) {
 				//}
 
 				// If it is not our target cell, set infinity H cost and transfer item to the closed list - it is not the best rule
-//				openList[1].SetHcost(infinity);
-//				whichList[parentX][parentY] = inClosedList;						// add item to the closed list
-//				numberOfClosedListItems++;
-//				closedList[numberOfClosedListItems] = openList[1];
+				openList[1].SetHcost(infinity);
+				whichList[parentX][parentY] = inClosedList;						// add item to the closed list
+				numberOfClosedListItems++;
+				closedList[numberOfClosedListItems] = openList[1];
 				DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems);	// delete this item from the open list
 
 				mine = cellsnapshot[ parent[parentX][parentY].first ] [ parent[parentX][parentY].second ];	// load snapshot
@@ -300,7 +343,7 @@ int Simulator::MoveRobot(IntPair target) {
 		
 			result = nonexistent;
 			break;
-		}  
+		}
 
 	}	// end while
 
@@ -334,7 +377,7 @@ int Simulator::MoveRobot(IntPair target) {
 			if (index != -1) unexpectedLambdas.push_back(index);
 		}
 		
-	} else return -1;
+	} //else return -1;
 
 // 7. Freeing used memory
 
@@ -347,7 +390,77 @@ int Simulator::MoveRobot(IntPair target) {
 
 	delete [] closedList;
 
-	return 0;
+	return result;
+}
+
+// Magic.
+int Simulator::Step(IntPair cell, int Gcost, OpenListItem * openList, int & numberOfOpenListItems, int ** whichList, 
+	IntPair ** parent, IntPair target, OpenListItem * closedList, int & numberOfClosedListItems)
+{
+	const int nonexistent = 0, found = 1;
+	int result = nonexistent;
+	IntPair nextCell(-1, -1);
+
+	//const int infinity = 1000000;
+	const int inClosedList = 2;	// lists-related constants
+	int parentX, parentY;
+
+	// record cell coordinates and Gcost of the item as parent for adjacent cells (see below)
+	parentX = cell.first;
+	parentY = cell.second;
+
+	OpenListItem * currOpenList = new OpenListItem [mine.GetWidth()*mine.GetHeight()+2];
+	int currNumberOfOpenedItems;
+	OpenListItem * currClosedList = new OpenListItem [mine.GetWidth()*mine.GetHeight()+2];
+	int currNumberOfClosedItems;
+
+	Field snapshot = mine;
+	do {
+		// Check the adjacent squares and add them to the open list
+		AddAdjacentCellsToOpenList(openList, numberOfOpenListItems, parentX, parentY, Gcost,
+									whichList, parent, target, closedList, numberOfClosedListItems);
+
+		// making a step and updating map
+		bool stoneMoved = MoveRobot(openList[1].GetX(), openList[1].GetY());
+		UpdateMap();
+
+		// Step was made - we can check new position
+		// Cheking robot's death after update and lift blocking situations
+		if (robotIsDead || (stoneMoved && IsLiftBlocked())) {
+			DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems);	// delete this item from the open list
+			mine = snapshot;	// load snapshot
+			robotIsDead = false;
+			continue;
+		}
+
+		if (openList[1].GetX() == target.first && openList[1].GetY() == target.second) {
+			result = found;
+			break;
+		}
+
+		whichList[parentX][parentY] = inClosedList;						// add item to the closed list
+		numberOfClosedListItems++;
+		closedList[numberOfClosedListItems] = openList[1];
+		IntPair currCell = IntPair(openList[1].GetX(), openList[1].GetY());
+		DeleteTopItemFromBinaryHeap(openList, numberOfOpenListItems);	// delete this item from the open list
+
+		//copy(openList, openList + numberOfOpenListItems + 1, currOpenList);
+		currNumberOfOpenedItems = numberOfOpenListItems;
+		//copy(closedList, closedList + numberOfOpenListItems + 1, currClosedList);
+		currNumberOfClosedItems = numberOfClosedListItems;
+		int next = Step(currCell, Gcost + 1, currOpenList, currNumberOfOpenedItems, whichList, parent, 
+			target, currClosedList, currNumberOfClosedItems);
+
+		if (next == 0) {
+			mine = snapshot;	// load snapshot
+			robotIsDead = false;
+		} else {
+			result = found;
+			break;
+		}
+	} while (numberOfOpenListItems != 0);
+	
+	return result;
 }
 
 bool Simulator::IsDeadLock(int x, int y)
@@ -372,6 +485,7 @@ int Simulator::FindMissedLambda(IntPair lambda)
 	}
 	return -1;
 }
+
 bool Simulator::FindUnexpectedLambda(int index)
 {
 	for (size_t i = 0; i < unexpectedLambdas.size(); i++) {									// this is the worst method!!!
@@ -381,7 +495,7 @@ bool Simulator::FindUnexpectedLambda(int index)
 }
 
 // Description: Moves robot to the target cell
-bool Simulator::Step(int x, int y)
+bool Simulator::MoveRobot(int x, int y)
 {
     bool stoneMoved = false;
 	int xold = mine.GetRobot().first;
@@ -447,6 +561,7 @@ void Simulator::AddAdjacentCellsToOpenList(OpenListItem * openList, int & number
 							openList[numberOfOpenListItems].SetGcost(Gcost + 1);
 									
 							// Figure out its H and F costs and parent
+							//parent[x][y].push_back(IntPair(parentX, parentY));				// change the cell's parent
 							parent[x][y].first = parentX;							// change the cell's parent
 							parent[x][y].second = parentY;
 							// F cost includes H cost except when we want to use A* algorithm as Dijkstra's algorithm
@@ -510,12 +625,12 @@ void Simulator::AddAdjacentCellsToOpenList(OpenListItem * openList, int & number
 									numberOfClosedListItems--;
 								}
 							}
-						}
-					}//
-				}
+						} //if (whichList[x][y] == inClosedList)
+					}
+				} //if (mine.isWalkable(x, y))
 			}
-		}
-	}
+		} // for (y)
+	} // for (x)
 }
 
 

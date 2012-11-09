@@ -25,8 +25,8 @@ public:
 
 	vector<_Command> GetTrace();
 	_GameResult GetResult();
-//	void SetTrace(vector<_Command> trac);
 	void SetGameResult(_GameResult result);
+
 	int Init(istream &sin);
 	void Solve(const int & iterations);
 
