@@ -19,7 +19,7 @@ class GUI
 		Game game;
 		int NewGame(const char *FileName);
 		int current_window;//0-nothing, 1-game_win, 2-help_hame_win, 3-about_game_win, 4-game_win with commands window
-		void draw_map(char **map, int column, int row, WINDOW *game_win);//draw map
+		void draw_map(char **map, int column, int row, int start_x, int start_y, WINDOW *game_win);//draw map
 		void draw_points(int Score, int Moves, int Lambdas, const char *Mov, WINDOW **frames);//draw current Score, Moves, Lambdas, 
 		void resize_refresh();//refresh game field
 	private:
@@ -51,6 +51,8 @@ class GUI
 		int input_Line();
 		void start(istream & sin);
 		void GetListOfFiles();
+		int startx, starty; //начальное положение карты
+		void solve_map(void);//функция запуска решателя
 }; 
 
 

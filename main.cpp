@@ -7,6 +7,6 @@
 
 int main()
 {
-	GUI *g = new GUI; 
-    	return 0;
+	GUI g; 
+    return 0;
 }

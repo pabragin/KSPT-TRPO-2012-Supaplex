@@ -11,7 +11,8 @@
 
 GUI::GUI(){
 	int key, selected_from_m, selected_from_h;
-
+	startx=0;
+	starty=0;
 	init_curses();
 	ESCDELAY=0;
 	x = getmaxx(stdscr);//terminal size
@@ -34,14 +35,10 @@ GUI::GUI(){
 		if (selected_from_m==0)
 		{
 			current_window=5;
-			str="";
-			strC="";
 			resize_refresh();
 		}
 		else if(selected_from_m==1)
 		{
-			str="";
-			strC="";
 			if(selectedMap!=-1)
 			{
 				if(NewGame(Files[selectedMap].c_str())!=-1)
@@ -53,25 +50,7 @@ GUI::GUI(){
 		}
 		else if(selected_from_m==3)
 		{
-			str="";
-			strC="";
-			if(selectedMap!=-1)
-			{
-				if(NewGame(Files[selectedMap].c_str())!=-1)
-				{
-					game.Solve(1);
-					for(int i=0; i<game.GetTrace().size(); i++)
-					{
-						game.MoveRobot(game.GetTrace()[i]);
-						str+=game.GetTrace()[i];
-						resize_refresh();
-						usleep(40000);
-					}
-					current_window=1;
-				}
-				else
-				current_window=0;
-			}
+			solve_map();
 			resize_refresh();
 		}
 	}
@@ -113,6 +92,10 @@ void GUI::start(istream & sin) {
 
 int GUI::NewGame(const char *FileName)
 {
+	str="";
+	strC="";
+	startx=0;
+	starty=0;
 	ifstream fin;
 	fin.open(FileName);
 	if (!fin.is_open()) 
@@ -123,84 +106,20 @@ int GUI::NewGame(const char *FileName)
 	return 0;
 }
 
-void GUI::hotkeys(int key){
-	switch (key){
-		case 259://up button
-		if(current_window==1 && game.GetResult()==0)
-		{
-			game.MoveRobot(UP);
-			str+="U";
-			resize_refresh();
-		}
-		break;
-		case 258://down button
-		if(current_window==1 && game.GetResult()==0)
-		{
-			game.MoveRobot(DOWN);
-			str+="D";
-			resize_refresh();
-		}
-		break;
-		case 260://left button
-		if(current_window==1 && game.GetResult()==0)
-		{
-			game.MoveRobot(LEFT);
-			str+="L";
-			resize_refresh();
-		}
-		break;
-		case 261://right button
-		if(current_window==1 && game.GetResult()==0)
-		{
-			game.MoveRobot(RIGHT);
-			str+="R";
-			resize_refresh();
-		}
-		break;
-		case 97://abort button
-		if(current_window==1 && game.GetResult()==0)
-		{
-			game.MoveRobot(ABORT);
-			str+="A";
-			resize_refresh();
-		}
-		break;
-		case 119://wait button
-		if(current_window==1 && game.GetResult()==0)
-		{
-			game.GetField()->UpdateMap();
-			str+="W";
-			resize_refresh();
-		}
-		break;
-	  case 14://ctrl-n
-	    current_window=5;
-	    str="";
-	    strC="";
-	    resize_refresh();
-	    break;
-	  case 18://ctrl-r
-		str="";
-	    strC="";
-	    if(selectedMap!=-1)
-	    {
-			if(NewGame(Files[selectedMap].c_str())!=-1)
-				current_window=1;
-				else
-				current_window=0;
-		}
-		resize_refresh();
-	    break;
-	  case 15://ctrl-o
-	    str="";
-		strC="";
-		if(selectedMap!=-1)
+void GUI::solve_map(void)
+{
+	if(selectedMap!=-1)
 		{
 			if(NewGame(Files[selectedMap].c_str())!=-1)
 			{
 				game.Solve(1);
-				for(int i=0; i<game.GetTrace().size(); i++)
+				for(unsigned int i=0; i<game.GetTrace().size(); i++)
 				{
+					//y-10,x-20,4,2)
+					if(x-22>game.GetField()->GetWidth()-1)
+					{
+						
+					}
 					game.MoveRobot(game.GetTrace()[i]);
 					str+=game.GetTrace()[i];
 					resize_refresh();
@@ -211,6 +130,102 @@ void GUI::hotkeys(int key){
 			else
 				current_window=0;
 		}
+}
+
+void GUI::hotkeys(int key){
+	switch (key){
+		case 119://"w" up
+		if(current_window==1 && game.GetResult()==0)
+		{
+			game.MoveRobot(UP);
+			str+="U";
+			resize_refresh();
+		}
+		break;
+		case 115://"s" down
+		if(current_window==1 && game.GetResult()==0)
+		{
+			game.MoveRobot(DOWN);
+			str+="D";
+			resize_refresh();
+		}
+		break;
+		case 97://"a" left button
+		if(current_window==1 && game.GetResult()==0)
+		{
+			game.MoveRobot(LEFT);
+			str+="L";
+			resize_refresh();
+		}
+		break;
+		case 100://"d"right button
+		if(current_window==1 && game.GetResult()==0)
+		{
+			game.MoveRobot(RIGHT);
+			str+="R";
+			resize_refresh();
+		}
+		break;
+		case 113://"q" abort button
+		if(current_window==1 && game.GetResult()==0)
+		{
+			game.MoveRobot(ABORT);
+			str+="A";
+			resize_refresh();
+		}
+		break;
+	   case 101://"e"wait button
+		if(current_window==1 && game.GetResult()==0)
+		{
+			game.GetField()->UpdateMap();
+			str+="W";
+			resize_refresh();
+		}
+		break;
+	   case 259://up button, scroll up
+		if(current_window==1&& starty!=0)
+		{
+			starty--;
+			resize_refresh();
+		}
+		break;
+	  case 258://down button, scroll down
+		if(current_window==1)
+		{
+			starty++;
+			resize_refresh();
+		}
+		break;
+	  case 260://left button, scroll left
+		if(current_window==1&& startx!=0)
+		{
+			startx--;
+			resize_refresh();
+		}
+		break;
+	  case 261://right button, scroll right
+		if(current_window==1)
+		{
+			startx++;
+			resize_refresh();
+		}
+		break;
+	  case 14://ctrl-n
+	    current_window=5;
+	    resize_refresh();
+	    break;
+	  case 18://ctrl-r
+	    if(selectedMap!=-1)
+	    {
+			if(NewGame(Files[selectedMap].c_str())!=-1)
+				current_window=1;
+				else
+				current_window=0;
+		}
+		resize_refresh();
+	    break;
+	  case 15://ctrl-o
+		solve_map();
 		resize_refresh();
 	    break;
 	  case 263://ctrl-h
@@ -238,7 +253,7 @@ int GUI::input_Line(){
 	int xx;
 	int yy;
 	if(strC.size()!=0){
-		if (strC.size()<(getmaxx(commands_line)*(getmaxy(commands_line)))-1)
+		if (strC.size()<(unsigned)(getmaxx(commands_line)*(getmaxy(commands_line)))-1)
 		{
 		    waddstr(commands_line,strC.c_str());
 		    wrefresh(commands_line);
@@ -292,7 +307,7 @@ int GUI::input_Line(){
 		    {
 				wmove(commands_line, 0, 0);
 				werase(commands_line);
-				if(strC.size()>=getmaxx(commands_line)*(getmaxy(commands_line)-1))
+				if(strC.size()>=(unsigned)getmaxx(commands_line)*(getmaxy(commands_line)-1))
 				{
 					waddstr(commands_line, strC.substr(strC.size()-(getmaxx(commands_line)*(getmaxy(commands_line)-1)), strC.size()).c_str());
 				}
@@ -316,7 +331,7 @@ int GUI::input_Line(){
 			f=false;
 			if(game.GetResult()==0)
 			{
-				for(int i=0; i<strC.size(); i++)
+				for(unsigned int i=0; i<strC.size(); i++)
 				{
 					if(game.GetResult()==0)
 					{
@@ -364,7 +379,7 @@ void GUI::resize_refresh(){
 			WINDOW **gw = draw_game_win();
 			string s= str;
 			draw_points(game.GetScore(), game.GetMoves(), game.GetCollectedLambdasNum(), s.c_str(), gw);
-			draw_map(game.GetField()->GetMap(), game.GetField()->GetWidth()-1, game.GetField()->GetHeight()-1, gw[0]);
+			draw_map(game.GetField()->GetMap(), game.GetField()->GetWidth()-1, game.GetField()->GetHeight()-1, startx, starty, gw[0]);
 			touchwin(stdscr);
 			refresh();
 		}
@@ -388,7 +403,7 @@ void GUI::resize_refresh(){
 			WINDOW **gw = draw_game_win();
 			string s= str;
 			draw_points(game.GetScore(), game.GetMoves(), 1, s.c_str(), gw);
-			draw_map(game.GetField()->GetMap(), game.GetField()->GetWidth()-1, game.GetField()->GetHeight()-1, gw[0]);
+			draw_map(game.GetField()->GetMap(), game.GetField()->GetWidth()-1, game.GetField()->GetHeight()-1, startx, starty, gw[0]);
 			touchwin(stdscr);
 			refresh();
 			draw_enter_commands();
@@ -487,7 +502,7 @@ WINDOW **GUI::draw_game_win(){
 	wmove(frames[2],1,1);
     waddstr(frames[2],"Trace:");
     wmove(frames[3],1,1);
-    waddstr(frames[3],"Movements: Arrow keys; a-ABORT; w-WAIT; \"ctrl-k\" - command window");
+    waddstr(frames[3],"Movements: w, a, s, d; q-ABORT; e-WAIT; \"ctrl-k\" - command window");
     wmove(frames[3],2,1);
     waddstr(frames[3],"\"ctrl-o\" - solve; \"ctrl-n\" - new game;\"ctrl-r\" - reset.");
 	touchwin(stdscr);
@@ -495,38 +510,38 @@ WINDOW **GUI::draw_game_win(){
 	return frames;
 }
 
-void GUI::draw_map(char **map, int column,int row, WINDOW *game_win)
+void GUI::draw_map(char **map, int column,int row, int start_x, int start_y, WINDOW *game_win)
 {
 	WINDOW *gameWin=subwin(game_win,y-12,x-22,5,3);
 	wbkgd(gameWin,COLOR_PAIR(2));
-	for(int i=0; i<=row; i++)
+	for(int i=start_y; i<=row; i++)
 	{	
-		for(int j=0; j<=column; j++)
+		for(int j=start_x; j<=column; j++)
 		{
 			switch (map[i][j]){
 			case 'R':
-				mvwinsch(gameWin, i, j, map[i][j]|COLOR_PAIR(3));
+				mvwinsch(gameWin, i-start_y, j-start_x, map[i][j]|COLOR_PAIR(3));
 				break;
 			case '*':
-				mvwinsch(gameWin, i, j, map[i][j]|COLOR_PAIR(12));
+				mvwinsch(gameWin, i-start_y, j-start_x, map[i][j]|COLOR_PAIR(12));
 				break;
 			case '.':
-				mvwinsch(gameWin, i, j, map[i][j]|COLOR_PAIR(11));
+				mvwinsch(gameWin, i-start_y, j-start_x, map[i][j]|COLOR_PAIR(11));
 				break;
 			case '\\':
-				mvwinsch(gameWin, i, j, map[i][j]|COLOR_PAIR(6));
+				mvwinsch(gameWin, i-start_y, j-start_x, map[i][j]|COLOR_PAIR(6));
 				break;
 			case 'L':
-				mvwinsch(gameWin, i, j, map[i][j]|COLOR_PAIR(9));
+				mvwinsch(gameWin, i-start_y, j-start_x, map[i][j]|COLOR_PAIR(9));
 				break;
 			case 'O':
-				mvwinsch(gameWin, i, j, map[i][j]|COLOR_PAIR(9));
+				mvwinsch(gameWin, i-start_y, j-start_x, map[i][j]|COLOR_PAIR(9));
 				break;
 			case '@':
-				mvwinsch(gameWin, i, j, map[i][j]|A_BLINK);
+				mvwinsch(gameWin, i-start_y, j-start_x, map[i][j]|A_BLINK);
 				break;
 			default:
-				mvwinsch(gameWin, i, j, map[i][j]);
+				mvwinsch(gameWin, i-start_y, j-start_x, map[i][j]);
 				break;
 			}
 		}
@@ -547,7 +562,7 @@ void GUI::draw_points(int Score, int Moves, int Lambdas, const char *Mov, WINDOW
 	mvwaddstr(frames[1], 5, 10, Lambdas_str);
 	string s;
 	s = Mov;
-	if (s.size()>(x-13))
+	if (s.size()>(unsigned)(x-13))
 		mvwprintw(frames[2], 1,8, s.substr(s.size()-(x-13), s.size()).c_str());
 	else
 		mvwprintw(frames[2], 1,8, s.c_str());
@@ -832,7 +847,7 @@ WINDOW **GUI::maps_win(){
     items[0]=subwin(game_win,y-5,x-6,4,3);//игровое поле
 	wbkgd(items[0],COLOR_PAIR(2));
 	box(items[0],ACS_VLINE,ACS_HLINE);
-	for(int i=0; i<Files.size(); i++)
+	for(unsigned int i=0; i<Files.size(); i++)
 	{
 		items[i+1]=subwin(items[0],1,17,i+8,5);
 		waddstr(items[i+1],Files[i].c_str());
@@ -847,7 +862,6 @@ WINDOW **GUI::maps_win(){
 }
 
 WINDOW **GUI::draw_enter_commands(){
-    int i;
     WINDOW **items;
     items=(WINDOW **)malloc(3*sizeof(WINDOW *));
     items[0]=newwin(6,x-6,y/2-3,3);
