@@ -26,14 +26,16 @@ public:
 private:
 	void UpdateMap();	// updates map according to the rules
 
-	int MoveRobot(IntPair target);
+	int MoveRobotToTarget(IntPair target);
+	int Step(IntPair cell, int Gcost, OpenListItem * openList, int & numberOfOpenListItems, int ** whichList, 
+		IntPair ** parent, IntPair target, OpenListItem * closedList, int & numberOfClosedListItems);
 
 	bool IsDeadLock(int x, int y);
 
 	int FindMissedLambda(IntPair lambda);
 	bool FindUnexpectedLambda(int index);
 
-	bool Step(int x, int y);
+	bool MoveRobot(int x, int y);
 
 	void MakeSnapshot();
 	void LoadSnapshot();

@@ -3,7 +3,7 @@
 
 #include "Game.h"
 
-const int iterations = 1;
+const int iterations = 0;
 
 void start(istream & sin);
 
@@ -35,5 +35,9 @@ void start(istream & sin) {
 	Game game;
 	if (game.Init(sin) != -1) {
 		game.Solve(iterations);
+		for (size_t i = 0; i < game.GetTrace().size(); i++) {
+			cout << game.GetTrace()[i];
+		}
+		cout << endl;
 	}
 }

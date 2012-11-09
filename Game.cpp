@@ -24,8 +24,8 @@ int Game::Init(istream &sin)
 	score = 0;
 	moves = 0;
 	lambdas_collected = 0;
+	game_result = 0;
 	trace.clear();
-	game_result=0;
 
 	return 0;
 }
@@ -56,10 +56,12 @@ _GameResult Game::GetResult()
 {
 	return this->game_result;
 }
+
 void Game::SetGameResult(_GameResult result)
 {
-	game_result=result;
+	game_result = result;
 }
+
 void Game::Solve(const int & iterations)
 {
 	TSPSolver solver(& this->mine);
@@ -73,11 +75,6 @@ void Game::Solve(const int & iterations)
 	vector<IntPair> path = sim.GetPath();
 	BuildPathByCoord(&path);
 
-	/*for (size_t i = 0; i < trace.size(); i++) {
-		cout << trace[i];
-	}
-	cout << endl;*/
-
 	//fout.close();
 }
 
@@ -86,6 +83,9 @@ void Game::MoveRobot(_Command COMMAND)
 	int xold = mine.GetRobot().first;
 	int yold = mine.GetRobot().second;
 	int x = xold, y = yold;
+
+	UpdateScore();
+
 	switch (COMMAND) {
 	case RIGHT:
 		y++;
@@ -122,9 +122,6 @@ void Game::MoveRobot(_Command COMMAND)
 		} else if (mine.GetObject(x, y) == OPENED_LIFT) {
 			UpdateScore(false, false, true);
 			game_result = LIFT_ESCAPE;
-		}
-		else {
-			UpdateScore();
 		}
 		mine.SetObject(xold, yold, EMPTY);
 		mine.SetObject(x, y, ROBOT);
