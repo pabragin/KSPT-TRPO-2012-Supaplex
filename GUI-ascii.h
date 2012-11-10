@@ -27,8 +27,7 @@ class GUI
 		WINDOW *gamename;//game title
 		WINDOW *menubar;//line in the top with
 		WINDOW *commands_line;//commands line must be input here
-		int x;//terminal size
-		int y;
+		IntPair termxy;
 		string str;//string of commands
 		string strC;//string of commands in command window, for resizing
 		vector<string> Files;
@@ -51,7 +50,7 @@ class GUI
 		int input_Line();
 		void start(istream & sin);
 		void GetListOfFiles();
-		int startx, starty; //начальное положение карты
+		IntPair startxy; //начальное положение карты
 		void solve_map(void);//функция запуска решателя
 }; 
 

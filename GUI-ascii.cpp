@@ -11,13 +11,11 @@
 
 GUI::GUI(){
 	int key, selected_from_m, selected_from_h;
-	startx=0;
-	starty=0;
+	startxy= make_pair(0, 0);
 	init_curses();
 	ESCDELAY=0;
-	x = getmaxx(stdscr);//terminal size
-	y = getmaxy(stdscr);
-	game_win=subwin(stdscr,y-5,x-4,4,2);//size of game window
+	termxy= make_pair(getmaxx(stdscr), getmaxy(stdscr));//terminal size
+	game_win=subwin(stdscr,termxy.second-5,termxy.first-4,4,2);//size of game window
 	wbkgd(game_win,COLOR_PAIR(2));
 
 	draw_game_name();
@@ -94,8 +92,7 @@ int GUI::NewGame(const char *FileName)
 {
 	str="";
 	strC="";
-	startx=0;
-	starty=0;
+	startxy=make_pair(0,0);
 	ifstream fin;
 	fin.open(FileName);
 	if (!fin.is_open()) 
@@ -116,9 +113,9 @@ void GUI::solve_map(void)
 				for(unsigned int i=0; i<game.GetTrace().size(); i++)
 				{
 					//y-10,x-20,4,2)
-					if(x-22>game.GetField()->GetWidth()-1)
+					if(termxy.first-22>game.GetField()->GetWidth()-1)
 					{
-						
+						startxy.first=(termxy.first-22)/2;
 					}
 					game.MoveRobot(game.GetTrace()[i]);
 					str+=game.GetTrace()[i];
@@ -183,30 +180,30 @@ void GUI::hotkeys(int key){
 		}
 		break;
 	   case 259://up button, scroll up
-		if(current_window==1&& starty!=0)
+		if(current_window==1&& startxy.second!=0)
 		{
-			starty--;
+			startxy.second--;
 			resize_refresh();
 		}
 		break;
 	  case 258://down button, scroll down
 		if(current_window==1)
 		{
-			starty++;
+			startxy.second++;
 			resize_refresh();
 		}
 		break;
 	  case 260://left button, scroll left
-		if(current_window==1&& startx!=0)
+		if(current_window==1&& startxy.first!=0)
 		{
-			startx--;
+			startxy.first--;
 			resize_refresh();
 		}
 		break;
 	  case 261://right button, scroll right
 		if(current_window==1)
 		{
-			startx++;
+			startxy.first++;
 			resize_refresh();
 		}
 		break;
@@ -367,10 +364,10 @@ int GUI::input_Line(){
 	return 0;
 }
 void GUI::resize_refresh(){
-	x = getmaxx(stdscr);//terminal size
-	y = getmaxy(stdscr);
+	termxy.first = getmaxx(stdscr);//terminal size
+	termxy.second = getmaxy(stdscr);
 	werase(stdscr);
-	if(x>20 && y>10)
+	if(termxy.first>20 && termxy.second>10)
 	{
 		draw_game_name();
 		draw_menubar();
@@ -379,12 +376,12 @@ void GUI::resize_refresh(){
 			WINDOW **gw = draw_game_win();
 			string s= str;
 			draw_points(game.GetScore(), game.GetMoves(), game.GetCollectedLambdasNum(), s.c_str(), gw);
-			draw_map(game.GetField()->GetMap(), game.GetField()->GetWidth()-1, game.GetField()->GetHeight()-1, startx, starty, gw[0]);
+			draw_map(game.GetField()->GetMap(), game.GetField()->GetWidth()-1, game.GetField()->GetHeight()-1, startxy.first, startxy.second, gw[0]);
 			touchwin(stdscr);
 			refresh();
 		}
 		else if (current_window==2){
-			game_win=subwin(stdscr,y-5,x-4,4,2);//size of game window
+			game_win=subwin(stdscr,termxy.second-5,termxy.first-4,4,2);//size of game window
 			wbkgd(game_win,COLOR_PAIR(2));
 			help_game_win();
 			touchwin(stdscr);
@@ -392,7 +389,7 @@ void GUI::resize_refresh(){
 		}
 		else if (current_window==3)
 		{
-			game_win=subwin(stdscr,y-5,x-4,4,2);//size of game window
+			game_win=subwin(stdscr,termxy.second-5,termxy.first-4,4,2);//size of game window
 			wbkgd(game_win,COLOR_PAIR(2));
 			about_game_win();
 			touchwin(stdscr);
@@ -403,7 +400,7 @@ void GUI::resize_refresh(){
 			WINDOW **gw = draw_game_win();
 			string s= str;
 			draw_points(game.GetScore(), game.GetMoves(), 1, s.c_str(), gw);
-			draw_map(game.GetField()->GetMap(), game.GetField()->GetWidth()-1, game.GetField()->GetHeight()-1, startx, starty, gw[0]);
+			draw_map(game.GetField()->GetMap(), game.GetField()->GetWidth()-1, game.GetField()->GetHeight()-1, startxy.first, startxy.second, gw[0]);
 			touchwin(stdscr);
 			refresh();
 			draw_enter_commands();
@@ -412,7 +409,7 @@ void GUI::resize_refresh(){
 		else if (current_window==5)
 		{
 			GetListOfFiles();
-			game_win=subwin(stdscr,y-5,x-4,4,2);//size of game window
+			game_win=subwin(stdscr,termxy.second-5,termxy.first-4,4,2);//size of game window
 			wbkgd(game_win,COLOR_PAIR(2));
 			WINDOW **menu_items;
 			menu_items=maps_win();
@@ -463,7 +460,7 @@ void GUI::init_curses(){
 
 void GUI::draw_menubar(){
 	bkgd(COLOR_PAIR(1));
-	menubar=subwin(stdscr,1,x,0,0);
+	menubar=subwin(stdscr,1,termxy.first,0,0);
 	wbkgd(menubar,COLOR_PAIR(2));
 	waddstr(menubar,"Menu");
 	wattron(menubar,COLOR_PAIR(3));
@@ -477,20 +474,20 @@ void GUI::draw_menubar(){
 }
 
 WINDOW **GUI::draw_game_win(){
-	game_win=subwin(stdscr,y-5,x-4,4,2);//size of game window
+	game_win=subwin(stdscr,termxy.second-5,termxy.first-4,4,2);//size of game window
 	wbkgd(game_win,COLOR_PAIR(2));
 	WINDOW **frames;
 	frames=(WINDOW **)malloc(4*sizeof(WINDOW *));
-	frames[0]=subwin(game_win,y-10,x-20,4,2);//игровое поле
+	frames[0]=subwin(game_win,termxy.second-10,termxy.first-20,4,2);//игровое поле
 	wbkgd(frames[0],COLOR_PAIR(2));
 	box(frames[0],ACS_VLINE,ACS_HLINE);
-	frames[1]=subwin(game_win,y-10,16,4,x-18);//очки
+	frames[1]=subwin(game_win,termxy.second-10,16,4,termxy.first-18);//очки
 	wbkgd(frames[1],COLOR_PAIR(2));
 	box(frames[1],ACS_VLINE,ACS_HLINE);
-	frames[2]=subwin(game_win,3,x-4,y-6,2);//ходы
+	frames[2]=subwin(game_win,3,termxy.first-4,termxy.second-6,2);//ходы
 	wbkgd(frames[2],COLOR_PAIR(2));
 	box(frames[2],ACS_VLINE,ACS_HLINE);
-	frames[3]=subwin(game_win,3,x-4,y-4,2);//hotkeys
+	frames[3]=subwin(game_win,3,termxy.first-4,termxy.second-4,2);//hotkeys
 	wbkgd(frames[2],COLOR_PAIR(2));
 	wmove(frames[1],1,1);
 	wattron(frames[1],COLOR_PAIR(3));
@@ -512,7 +509,7 @@ WINDOW **GUI::draw_game_win(){
 
 void GUI::draw_map(char **map, int column,int row, int start_x, int start_y, WINDOW *game_win)
 {
-	WINDOW *gameWin=subwin(game_win,y-12,x-22,5,3);
+	WINDOW *gameWin=subwin(game_win,termxy.second-12,termxy.first-22,5,3);
 	wbkgd(gameWin,COLOR_PAIR(2));
 	for(int i=start_y; i<=row; i++)
 	{	
@@ -562,8 +559,8 @@ void GUI::draw_points(int Score, int Moves, int Lambdas, const char *Mov, WINDOW
 	mvwaddstr(frames[1], 5, 10, Lambdas_str);
 	string s;
 	s = Mov;
-	if (s.size()>(unsigned)(x-13))
-		mvwprintw(frames[2], 1,8, s.substr(s.size()-(x-13), s.size()).c_str());
+	if (s.size()>(unsigned)(termxy.first-13))
+		mvwprintw(frames[2], 1,8, s.substr(s.size()-(termxy.first-13), s.size()).c_str());
 	else
 		mvwprintw(frames[2], 1,8, s.c_str());
 	touchwin(stdscr);
@@ -572,7 +569,7 @@ void GUI::draw_points(int Score, int Moves, int Lambdas, const char *Mov, WINDOW
 
 void GUI::about_game_win()
 {
-	WINDOW *f=subwin(game_win,y-5,x-6,4,3);//игровое поле
+	WINDOW *f=subwin(game_win,termxy.second-5,termxy.first-6,4,3);//игровое поле
 	wbkgd(f,COLOR_PAIR(2));
 	box(f,ACS_VLINE,ACS_HLINE);
 	wmove(f,1,1);
@@ -588,7 +585,7 @@ void GUI::about_game_win()
 
 void GUI::help_game_win()
 {
-	WINDOW *f=subwin(game_win,y-5,x-6,4,3);//игровое поле
+	WINDOW *f=subwin(game_win,termxy.second-5,termxy.first-6,4,3);//игровое поле
 	wbkgd(f,COLOR_PAIR(2));
 	box(f,ACS_VLINE,ACS_HLINE);
 	wmove(f,1,1);
@@ -844,7 +841,7 @@ WINDOW **GUI::draw_menu_help(){
 WINDOW **GUI::maps_win(){
     WINDOW **items;
     items=(WINDOW **)malloc((Files.size()+1)*sizeof(WINDOW *));
-    items[0]=subwin(game_win,y-5,x-6,4,3);//игровое поле
+    items[0]=subwin(game_win,termxy.second-5,termxy.first-6,4,3);//игровое поле
 	wbkgd(items[0],COLOR_PAIR(2));
 	box(items[0],ACS_VLINE,ACS_HLINE);
 	for(unsigned int i=0; i<Files.size(); i++)
@@ -854,7 +851,7 @@ WINDOW **GUI::maps_win(){
 	}
 	wbkgd(items[1],COLOR_PAIR(1));
 	
-	move(5,x/2-10);
+	move(5,termxy.first/2-10);
 	printw("Please select a file:");
 	
     wrefresh(items[0]);
@@ -864,11 +861,11 @@ WINDOW **GUI::maps_win(){
 WINDOW **GUI::draw_enter_commands(){
     WINDOW **items;
     items=(WINDOW **)malloc(3*sizeof(WINDOW *));
-    items[0]=newwin(6,x-6,y/2-3,3);
+    items[0]=newwin(6,termxy.first-6,termxy.second/2-3,3);
     wbkgd(items[0],COLOR_PAIR(2));
     box(items[0],ACS_VLINE,ACS_HLINE);
-    items[1]=subwin(items[0],1,30,y/2-2,4);
-    items[2]=subwin(items[0],3,x-8,y/2-1,4);
+    items[1]=subwin(items[0],1,30,termxy.second/2-2,4);
+    items[2]=subwin(items[0],3,termxy.first-8,termxy.second/2-1,4);
     waddstr(items[1],"Please, enter commands:");
 	wbkgd(items[2],COLOR_PAIR(8));
 	commands_line=items[2];
@@ -878,11 +875,11 @@ WINDOW **GUI::draw_enter_commands(){
 
 void GUI::draw_game_name(){
 	werase(stdscr);
-	gamename=subwin(stdscr,3,20,1,x/2-10);
+	gamename=subwin(stdscr,3,20,1,termxy.first/2-10);
 	wbkgd(gamename,COLOR_PAIR(1));
 	box(gamename,ACS_VLINE|A_BOLD,ACS_HLINE|A_BOLD);
 	attron(A_BLINK|A_BOLD|A_UNDERLINE);
-	move(2,x/2-4);
+	move(2,termxy.first/2-4);
 	printw("SUPAPLEX");
 	attroff(A_BLINK|A_BOLD|A_UNDERLINE);
 }
