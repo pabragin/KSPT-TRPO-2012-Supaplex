@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <cstring>
 #include <string>
+#include <sstream>
 #include <stdio.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -27,11 +28,15 @@ class GUI
 		WINDOW *gamename;//game title
 		WINDOW *menubar;//line in the top with
 		WINDOW *commands_line;//commands line must be input here
-		IntPair termxy;
+		WINDOW *time_line;//time line must be input here
+		int x;//terminal size
+		int y;
 		string str;//string of commands
 		string strC;//string of commands in command window, for resizing
+		string strT;//string of Time in time window, for resizig
 		vector<string> Files;
 		int selectedMap;
+		long SleepTime;//time of move robot
 		void init_curses();
 		void draw_menubar();
 		WINDOW **draw_game_win();
@@ -47,11 +52,15 @@ class GUI
 		void draw_game_name();
 		void hotkeys(int key);
 		WINDOW **draw_enter_commands();
+		WINDOW **draw_time_line();
 		int input_Line();
 		void start(istream & sin);
 		void GetListOfFiles();
-		IntPair startxy; //начальное положение карты
+		int startx, starty; //начальное положение карты
 		void solve_map(void);//функция запуска решателя
+		void RobotCentred(void);//Выставление начальных координат на робота
+		int time_Line(void);//функция ввода времени
+		void DrawAddForMenu(void);//дополнительное меню в шапке
 }; 
 
 
