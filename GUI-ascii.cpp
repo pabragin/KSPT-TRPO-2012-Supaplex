@@ -9,6 +9,9 @@
 #define ESCAPE 27
 #define BACKSPACE 330
 
+long SleepTime=200000;
+pthread_mutex_t mutex;
+
 GUI::GUI(){
 	int key, selected_from_m, selected_from_h;
 	startx=0;
@@ -23,7 +26,6 @@ GUI::GUI(){
 	draw_game_name();
 	draw_menubar();
 	selectedMap=-1;
-	SleepTime=200000;
 	current_window=0;//current window is empty
 	do
 	{
@@ -72,7 +74,7 @@ GUI::GUI(){
 		}
 	}
 	hotkeys(key);
-	printw("%i",key);//print number of char
+	//printw("%i",key);//print number of char
 	if (key==KEY_RESIZE){
 	  resize_refresh();
 	}
@@ -126,27 +128,58 @@ void GUI::RobotCentred(void)
 			starty=0;
 	}
 }
+
+void *fun(void* b)
+{
+	while(true)
+	{
+		int key=getchar();
+		if(key==45)
+		{
+			pthread_mutex_lock(&mutex);
+			if(SleepTime>50000)
+			SleepTime-=50000;
+			pthread_mutex_unlock(&mutex);
+		}
+		else if(key==61)
+		{
+			pthread_mutex_lock(&mutex);
+			SleepTime+=50000;
+			pthread_mutex_unlock(&mutex);
+		}
+	}
+	return NULL;	
+}
+
 void GUI::solve_map(void)
 {
 	if(selectedMap!=-1)
 		{
 			if(NewGame(Files[selectedMap].c_str())!=-1)
 			{
+				pthread_t t;
+				pthread_mutex_init(&mutex, NULL);
 				RobotCentred();
 				game.Solve(1);
+				pthread_create(&t, NULL, fun, NULL);
 				for(unsigned int i=0; i<game.GetTrace().size(); i++)
 				{
 					RobotCentred();
 					game.MoveRobot(game.GetTrace()[i]);
 					str+=game.GetTrace()[i];
 					resize_refresh();
+					pthread_mutex_lock(&mutex);
 					usleep(SleepTime);
+					pthread_mutex_unlock(&mutex);
 				}
+				pthread_mutex_destroy(&mutex);
+				pthread_cancel(t);
 				current_window=1;
 			}
 			else
 				current_window=0;
 		}
+		
 }
 
 void GUI::hotkeys(int key){
@@ -156,7 +189,6 @@ void GUI::hotkeys(int key){
 		{
 			game.MoveRobot(UP);
 			str+="U";
-			RobotCentred();
 			resize_refresh();
 		}
 		break;
@@ -165,7 +197,6 @@ void GUI::hotkeys(int key){
 		{
 			game.MoveRobot(DOWN);
 			str+="D";
-			RobotCentred();
 			resize_refresh();
 		}
 		break;
@@ -174,7 +205,6 @@ void GUI::hotkeys(int key){
 		{
 			game.MoveRobot(LEFT);
 			str+="L";
-			RobotCentred();
 			resize_refresh();
 		}
 		break;
@@ -183,7 +213,6 @@ void GUI::hotkeys(int key){
 		{
 			game.MoveRobot(RIGHT);
 			str+="R";
-			RobotCentred();
 			resize_refresh();
 		}
 		break;
@@ -192,7 +221,6 @@ void GUI::hotkeys(int key){
 		{
 			game.MoveRobot(ABORT);
 			str+="A";
-			RobotCentred();
 			resize_refresh();
 		}
 		break;
@@ -201,7 +229,6 @@ void GUI::hotkeys(int key){
 		{
 			game.GetField()->UpdateMap();
 			str+="W";
-			RobotCentred();
 			resize_refresh();
 		}
 		break;
@@ -366,10 +393,17 @@ int GUI::input_Line(){
 				{
 					if(game.GetResult()==0)
 					{
+						pthread_t t;
+						pthread_mutex_init(&mutex, NULL);
+						pthread_create(&t, NULL, fun, NULL);
 						game.MoveRobot(strC[i]);
 						str+=strC[i];
 						resize_refresh();
+						pthread_mutex_lock(&mutex);
 						usleep(SleepTime);
+						pthread_mutex_unlock(&mutex);
+						pthread_mutex_destroy(&mutex);
+						pthread_cancel(t);
 					}
 				}
 			}
@@ -667,7 +701,7 @@ WINDOW **GUI::draw_game_win(){
 	wmove(frames[2],1,1);
     waddstr(frames[2],"Trace:");
     wmove(frames[3],1,1);
-    string buf = "Movements: w, a, s, d; q-ABORT; e-WAIT; \"ctrl-o\" - solve; \"ctrl-n\" - new game;\"ctrl-r\" - reset.";
+    string buf = "Movements: w, a, s, d; q-ABORT; e-WAIT; \"ctrl-k\" - command window \"ctrl-o\" - solve; \"ctrl-n\" - new game;\"ctrl-r\" - reset.";
     if(buf.size()<(unsigned)(x-6))
 		waddstr(frames[3],buf.c_str());
 	else

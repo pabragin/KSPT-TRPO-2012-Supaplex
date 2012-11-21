@@ -5,7 +5,7 @@ NAME=Supaplex
 OBJDIR2=obj2
 NAME2=GUI
 RM=rm
-LIBS=-lncurses
+LIBS=-lncurses -lpthread
 
 SRCS=Simulator.cpp Field.cpp Game.cpp OpenListItem.cpp Supaplex.cpp TSPSolver.cpp stdafx.cpp
 SRCS2=Simulator.cpp Field.cpp Game.cpp OpenListItem.cpp GUI-ascii.cpp main.cpp TSPSolver.cpp stdafx.cpp

@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include "Game.h"
 #include "stdafx.h"
+#include <pthread.h>
 
 using namespace std;
 
@@ -36,7 +37,6 @@ class GUI
 		string strT;//string of Time in time window, for resizig
 		vector<string> Files;
 		int selectedMap;
-		long SleepTime;//time of move robot
 		void init_curses();
 		void draw_menubar();
 		WINDOW **draw_game_win();
