@@ -16,6 +16,7 @@ GUI::GUI() {
     int key, selected_from_m, selected_from_h;
     startx = 0;
     starty = 0;
+    startpos = 0;
     init_curses();
     fm = new FileManager();
     ESCDELAY = 0;
@@ -548,7 +549,7 @@ void GUI::resize_refresh() {
                 resize_refresh();
                 return;
             }
-            delete_menu(menu_items, (fm->GetFolders().size() + fm->GetFiles().size() + 1));
+            delete_menu(menu_items, (fm->GetFolders().size() + fm->GetFiles().size() + 2));
             if ((unsigned) selectedMap >= fm->GetFolders().size()) {
                 if (NewGame(fm->GetFiles()[selectedMap - fm->GetFolders().size()].c_str()) != -1) {
                     current_window = 1;
@@ -833,22 +834,28 @@ int GUI::scroll_menu(WINDOW **items) {
 int GUI::scroll_maps(WINDOW **items) {
     int key;
     int selected = 0;
-    int count = (fm->GetFiles().size() + fm->GetFolders().size());
+    int count = (fm->GetFiles().size() + fm->GetFolders().size()-startpos);
     while (1) {
         key = getch();
         if (key == KEY_DOWN || key == KEY_UP) {
             if((unsigned)(selected)<fm->GetFolders().size())
-                wbkgd(items[selected+1], COLOR_PAIR(6));
+                wbkgd(items[selected+2], COLOR_PAIR(6));
             else
-            wbkgd(items[selected + 1], COLOR_PAIR(2));
-            wnoutrefresh(items[selected + 1]);
+            wbkgd(items[selected + 2], COLOR_PAIR(2));
+            wnoutrefresh(items[selected + 2]);
             if (key == KEY_DOWN) {
                 selected = (selected + 1) % count;
             } else {
                 selected = (selected + count - 1) % count;
             }
-            wbkgd(items[selected + 1], COLOR_PAIR(1));
-            wnoutrefresh(items[selected + 1]);
+            if(selected>(y-12))
+            {
+                startpos=selected;
+                resize_refresh();
+                return 0;
+            }
+            wbkgd(items[selected + 2], COLOR_PAIR(1));
+            wnoutrefresh(items[selected + 2]);
             doupdate();
         } else if (key == ESCAPE) {
             return -1;
@@ -978,25 +985,33 @@ WINDOW **GUI::draw_menu_help() {
 
 WINDOW **GUI::maps_win() {
     WINDOW **items;
-    items = (WINDOW **) malloc((fm->GetFiles().size() + fm->GetFolders().size() + 1) * sizeof (WINDOW *));
-    items[0] = subwin(game_win, y - 6, x - 6, 4, 3); //игровое поле
+    items = (WINDOW **) malloc((fm->GetFiles().size() + fm->GetFolders().size() + 2) * sizeof (WINDOW *));
+    items[0] = subwin(game_win, y - 5, x - 6, 4, 3); //игровое поле
     wbkgd(items[0], COLOR_PAIR(2));
     box(items[0], ACS_VLINE, ACS_HLINE);
+    items[1] = subwin(items[0], y - 6, x - 6, 4, 3);
     int j = 0;
-    for (unsigned int i = 0; i < fm->GetFolders().size(); i++) {
-        items[i + 1] = subwin(items[0], 1, 30, i + 8, 5);
-        wattron(items[i + 1], COLOR_PAIR(6));
-        waddstr(items[i + 1], fm->GetFolders()[i].c_str());
-        wattroff(items[i + 1], COLOR_PAIR(6));
+    if(fm->GetFolders().size()>(unsigned)startpos)
+    {
+    for (unsigned int i = 0; i < fm->GetFolders().size()-startpos; i++) {
+        items[i + 2] = subwin(items[1], 1, 17, i + 8, 5);
+        wattron(items[i + 2], COLOR_PAIR(6));
+        waddstr(items[i + 2], fm->GetFolders()[i+startpos].c_str());
+        wattroff(items[i + 2], COLOR_PAIR(6));
         j++;
     }
-    for (unsigned int i = 0; i < fm->GetFiles().size(); i++) {
-        items[i + 1 + fm->GetFolders().size()] = subwin(items[0], 1, 30, fm->GetFolders().size() + i + 8, 5);
-        waddstr(items[i + 1 + fm->GetFolders().size()], fm->GetFiles()[i].c_str());
+    }
+    unsigned int totalFolders=j;
+    if(fm->GetFiles().size()!=0)
+    {
+    for (unsigned int i = 0; i < fm->GetFiles().size()-startpos; i++) {
+        items[i+totalFolders+2] = subwin(items[1], 1, 17, totalFolders + i + 8, 5);
+        waddstr(items[i+totalFolders + 2], fm->GetFiles()[i].c_str());
         j++;
+    }
     }
     if (j > 0)
-        wbkgd(items[1], COLOR_PAIR(1));
+        wbkgd(items[2], COLOR_PAIR(1));
 
     move(5, x / 2 - 10);
     printw("Please select a file:");
