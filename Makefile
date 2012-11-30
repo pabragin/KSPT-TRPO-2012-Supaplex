@@ -8,7 +8,7 @@ RM=rm
 LIBS=-lncurses -lpthread
 
 SRCS=Simulator.cpp Field.cpp Game.cpp OpenListItem.cpp Supaplex.cpp TSPSolver.cpp stdafx.cpp
-SRCS2=Simulator.cpp Field.cpp Game.cpp OpenListItem.cpp GUI-ascii.cpp main.cpp TSPSolver.cpp stdafx.cpp
+SRCS2=Simulator.cpp Field.cpp Game.cpp OpenListItem.cpp FileManager.cpp GUI-ascii.cpp main.cpp TSPSolver.cpp stdafx.cpp
 
 OBJS:=$(SRCS:.cpp=.o)
 OBJS:=$(addprefix $(OBJDIR)/,$(OBJS))
@@ -28,13 +28,13 @@ $(OBJDIR)/%.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR2)/%.o: %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -g -c $< -o $@
 
 $(NAME): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 	
 $(NAME2): $(OBJS2)
-	$(CC) $(CFLAGS2) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS2) -g -o $@ $^ $(LIBS)
 
 clean:
 	$(RM) $(OBJDIR)/*.o
