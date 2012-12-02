@@ -546,6 +546,7 @@ void GUI::resize_refresh() {
             selectedMap = scroll_maps(menu_items);
             if (selectedMap == -1) {
                 current_window = 0;
+                CurrentPath = ".";
                 resize_refresh();
                 return;
             }
@@ -834,26 +835,25 @@ int GUI::scroll_menu(WINDOW **items) {
 int GUI::scroll_maps(WINDOW **items) {
     int key;
     int selected = 0;
-    int count = (fm->GetFiles().size() + fm->GetFolders().size()-startpos);
+    int count = (fm->GetFiles().size() + fm->GetFolders().size());
     while (1) {
         key = getch();
         if (key == KEY_DOWN || key == KEY_UP) {
-            if((unsigned)(selected)<fm->GetFolders().size())
-                wbkgd(items[selected+2], COLOR_PAIR(6));
+            if ((unsigned) (selected) < fm->GetFolders().size())
+                wbkgd(items[selected + 2], COLOR_PAIR(6));
             else
-            wbkgd(items[selected + 2], COLOR_PAIR(2));
+                wbkgd(items[selected + 2], COLOR_PAIR(2));
             wnoutrefresh(items[selected + 2]);
             if (key == KEY_DOWN) {
+                wscrl(items[1], 1);
                 selected = (selected + 1) % count;
             } else {
+                wscrl(items[1], -1);
                 selected = (selected + count - 1) % count;
             }
-            if(selected>(y-12))
-            {
-                startpos=selected;
-                resize_refresh();
-                return 0;
-            }
+            //if(selected>(y-12))
+            //{
+            //}
             wbkgd(items[selected + 2], COLOR_PAIR(1));
             wnoutrefresh(items[selected + 2]);
             doupdate();
@@ -862,6 +862,7 @@ int GUI::scroll_maps(WINDOW **items) {
         } else if (key == ENTER) {
             return selected;
         } else if (key == KEY_RESIZE) {
+            CurrentPath = ".";
             resize_refresh();
             return -1;
         }
@@ -890,8 +891,7 @@ int GUI::scroll_help(WINDOW **items) {
             wnoutrefresh(items[selected + 1]);
             if (key == KEY_DOWN) {
                 selected = (selected + 1) % count;
-            }
-            else {
+            } else {
                 selected = (selected + count - 1) % count;
             }
             wbkgd(items[selected + 1], COLOR_PAIR(1));
@@ -908,11 +908,9 @@ int GUI::scroll_help(WINDOW **items) {
             }
             wnoutrefresh(items[selected + 1]);
             doupdate();
-        }
-        else if (key == ESCAPE || key == KEY_F(2)) {
+        } else if (key == ESCAPE || key == KEY_F(2)) {
             return -1;
-        }
-        else if (key == ENTER) {
+        } else if (key == ENTER) {
             return selected;
         }
         if (key == KEY_RESIZE) {
@@ -989,32 +987,24 @@ WINDOW **GUI::maps_win() {
     items[0] = subwin(game_win, y - 5, x - 6, 4, 3); //игровое поле
     wbkgd(items[0], COLOR_PAIR(2));
     box(items[0], ACS_VLINE, ACS_HLINE);
-    items[1] = subwin(items[0], y - 6, x - 6, 4, 3);
-    int j = 0;
-    if(fm->GetFolders().size()>(unsigned)startpos)
-    {
-    for (unsigned int i = 0; i < fm->GetFolders().size()-startpos; i++) {
+    items[1] = subwin(items[0], y - 8, x - 8, 6, 4);
+    scrollok(items[1], true);
+    idlok(items[1], true);
+    unsigned int i = 0;
+    for (i = 0; i < fm->GetFolders().size(); i++) {
         items[i + 2] = subwin(items[1], 1, 17, i + 8, 5);
         wattron(items[i + 2], COLOR_PAIR(6));
-        waddstr(items[i + 2], fm->GetFolders()[i+startpos].c_str());
+        waddstr(items[i + 2], fm->GetFolders()[i].c_str());
         wattroff(items[i + 2], COLOR_PAIR(6));
-        j++;
     }
+    int totalFolders = i;
+    for (unsigned int i = 0; i < fm->GetFiles().size(); i++) {
+        items[i + totalFolders + 2] = subwin(items[1], 1, 17, totalFolders + i + 8, 5);
+        waddstr(items[i + totalFolders + 2], fm->GetFiles()[i].c_str());
     }
-    unsigned int totalFolders=j;
-    if(fm->GetFiles().size()!=0)
-    {
-    for (unsigned int i = 0; i < fm->GetFiles().size()-startpos; i++) {
-        items[i+totalFolders+2] = subwin(items[1], 1, 17, totalFolders + i + 8, 5);
-        waddstr(items[i+totalFolders + 2], fm->GetFiles()[i].c_str());
-        j++;
-    }
-    }
-    if (j > 0)
-        wbkgd(items[2], COLOR_PAIR(1));
+    wbkgd(items[2], COLOR_PAIR(1));
 
-    move(5, x / 2 - 10);
-    printw("Please select a file:");
+    mvwprintw(items[0], 1, x / 2 - 10, "Please select a file:");
 
     wrefresh(items[0]);
     return items;
