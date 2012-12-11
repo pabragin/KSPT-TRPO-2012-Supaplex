@@ -10,6 +10,7 @@
 #include "Game.h"
 #include "FileManager.h"
 #include "stdafx.h"
+#include "GameHistory.h"
 #include <pthread.h>
 
 using namespace std;
@@ -38,6 +39,7 @@ private:
     string strC; //string of commands in command window, for resizing
     string strT; //string of Time in time window, for resizig
     string CurrentPath; //В каком каталоге находимся
+    GameHistory *history;//history of moves
     int selectedMap;
     bool firstNewGame;
     bool firstStart;

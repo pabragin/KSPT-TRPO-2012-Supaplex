@@ -10,13 +10,14 @@
 #define BACKSPACE 330
 
 long SleepTime = 200000;
-pthread_mutex_t mutex;
+pthread_mutex_t mutex, mutex2;
 
 GUI::GUI() {
     int key, selected_from_m, selected_from_h;
     startx = 0;
     starty = 0;
     startpos = 0;
+    history = new GameHistory();
     init_curses();
     fm = new FileManager();
     ESCDELAY = 0;
@@ -65,7 +66,7 @@ GUI::GUI() {
             }
         }
         hotkeys(key);
-        //printw("%i",key);//print number of char
+        printw("%i",key);//print number of char
         if (key == KEY_RESIZE) {
             resize_refresh();
         }
@@ -120,7 +121,7 @@ void GUI::RobotCentred(void) {
             starty = 0;
     }
 }
-
+bool block=false;
 void *fun(void* b) {
     while (true) {
         int key = getchar();
@@ -131,8 +132,17 @@ void *fun(void* b) {
             pthread_mutex_unlock(&mutex);
         } else if (key == 45) {
             pthread_mutex_lock(&mutex);
+            if (SleepTime<400000)
             SleepTime += 50000;
             pthread_mutex_unlock(&mutex);
+        }
+        else if (key == 32) {
+            pthread_mutex_lock(&mutex2);
+            if (block==true)
+            block=false;
+            else
+            block=true;
+            pthread_mutex_unlock(&mutex2);
         }
     }
     return NULL;
@@ -141,21 +151,32 @@ void *fun(void* b) {
 void GUI::solve_map(void) {
     if (selectedMap != -1) {
         if (NewGame(fm->GetFiles()[selectedMap - fm->GetFolders().size()].c_str()) != -1) {
+			block=false;
             pthread_t t;
             pthread_mutex_init(&mutex, NULL);
+            pthread_mutex_init(&mutex2, NULL);
             RobotCentred();
             game.Solve(1);
             pthread_create(&t, NULL, fun, NULL);
-            for (unsigned int i = 0; i < game.GetTrace().size(); i++) {
-                RobotCentred();
-                game.MoveRobot(game.GetTrace()[i]);
-                str += game.GetTrace()[i];
-                resize_refresh();
-                pthread_mutex_lock(&mutex);
-                usleep(SleepTime);
-                pthread_mutex_unlock(&mutex);
+			if(game.GetResult() == 0)
+            {
+				for (unsigned int i = 0; i < game.GetTrace().size(); i++) {
+					RobotCentred();
+					history->SaveState(game);
+					game.MoveRobot(game.GetTrace()[i]);
+					str += game.GetTrace()[i];
+					resize_refresh();
+					pthread_mutex_lock(&mutex);
+					usleep(SleepTime);
+					pthread_mutex_unlock(&mutex);
+					pthread_mutex_lock(&mutex2);
+					if(block==true)
+					break;
+					pthread_mutex_unlock(&mutex2);
             }
+			}
             pthread_mutex_destroy(&mutex);
+            pthread_mutex_destroy(&mutex2);
             pthread_cancel(t);
             current_window = 1;
         } else
@@ -168,6 +189,7 @@ void GUI::hotkeys(int key) {
     switch (key) {
         case 119://"w" up
             if (current_window == 1 && game.GetResult() == 0) {
+				history->SaveState(game);
                 game.MoveRobot(UP);
                 str += "U";
                 RobotCentred();
@@ -176,6 +198,7 @@ void GUI::hotkeys(int key) {
             break;
         case 115://"s" down
             if (current_window == 1 && game.GetResult() == 0) {
+				history->SaveState(game);
                 game.MoveRobot(DOWN);
                 str += "D";
                 RobotCentred();
@@ -184,6 +207,7 @@ void GUI::hotkeys(int key) {
             break;
         case 97://"a" left button
             if (current_window == 1 && game.GetResult() == 0) {
+				history->SaveState(game);
                 game.MoveRobot(LEFT);
                 str += "L";
                 RobotCentred();
@@ -192,6 +216,7 @@ void GUI::hotkeys(int key) {
             break;
         case 100://"d"right button
             if (current_window == 1 && game.GetResult() == 0) {
+				history->SaveState(game);
                 game.MoveRobot(RIGHT);
                 str += "R";
                 RobotCentred();
@@ -200,6 +225,7 @@ void GUI::hotkeys(int key) {
             break;
         case 113://"q" abort button
             if (current_window == 1 && game.GetResult() == 0) {
+				history->SaveState(game);
                 game.MoveRobot(ABORT);
                 str += "A";
                 resize_refresh();
@@ -207,8 +233,39 @@ void GUI::hotkeys(int key) {
             break;
         case 101://"e"wait button
             if (current_window == 1 && game.GetResult() == 0) {
+				history->SaveState(game);
                 game.GetField()->UpdateMap();
                 str += "W";
+                resize_refresh();
+            }
+            break;
+        case 91://undo button
+            if (current_window == 1) {
+				if(history->Undo(game)==0)
+				{
+					game=history->GetGameState();
+					str.erase();
+					for(int j=0; j<game.GetTrace().size(); j++)
+					{
+						str+=game.GetTrace()[j];
+					}
+				}
+                game.GetField()->UpdateMap();
+                resize_refresh();
+            }
+            break;
+        case 93://redo button
+            if (current_window == 1) {
+				if(history->Redo()==0)
+				{
+					game=history->GetGameState();
+					str.erase();
+					for(int j=0; j<game.GetTrace().size(); j++)
+					{
+						str+=game.GetTrace()[j];
+					}
+				}
+                game.GetField()->UpdateMap();
                 resize_refresh();
             }
             break;
@@ -835,31 +892,105 @@ int GUI::scroll_menu(WINDOW **items) {
 int GUI::scroll_maps(WINDOW **items) {
     int key;
     int selected = 0;
+    int currentPos = 0;
     int count = (fm->GetFiles().size() + fm->GetFolders().size());
     while (1) {
         key = getch();
-        if (key == KEY_DOWN || key == KEY_UP) {
+        if (key == KEY_DOWN || key == KEY_UP) 
+        {
             if ((unsigned) (selected) < fm->GetFolders().size())
-                wbkgd(items[selected + 2], COLOR_PAIR(6));
+                wbkgd(items[currentPos + 2], COLOR_PAIR(6));
             else
-                wbkgd(items[selected + 2], COLOR_PAIR(2));
-            wnoutrefresh(items[selected + 2]);
+                wbkgd(items[currentPos + 2], COLOR_PAIR(2));
+            wnoutrefresh(items[currentPos + 2]);
             if (key == KEY_DOWN) {
-                wscrl(items[1], 1);
-                selected = (selected + 1) % count;
-            } else {
-                wscrl(items[1], -1);
-                selected = (selected + count - 1) % count;
+				if((selected!=(count-1)))
+				{
+					selected++;
+					currentPos++;
+				}
+                if ((selected%(y - 10))==0) 
+                {
+					werase(items[1]);
+					int i = 0;
+					int totalPrint=0;
+					if(totalPrint<(y-10))
+					{
+						if(fm->GetFolders().size()>(unsigned)selected)
+						{
+							for (i = 0; i < (signed)(fm->GetFolders().size()-selected); i++) 
+							{
+								items[i + 2] = subwin(items[1], 1, 17, i + 8, 5);
+								wattron(items[i + 2], COLOR_PAIR(6));
+								waddstr(items[i + 2], fm->GetFolders()[i+selected].c_str());
+								wattroff(items[i + 2], COLOR_PAIR(6));
+								totalPrint++;
+							}
+							wrefresh(items[1]);
+							currentPos=0;
+						}
+						int totalFolders = i;
+						if((fm->GetFiles().size()+fm->GetFolders().size())>(unsigned)selected)
+							for (unsigned int i = 0; i < (fm->GetFiles().size()+fm->GetFolders().size())-selected; i++) 
+							{
+								items[i + totalFolders + 2] = subwin(items[1], 1, 17, totalFolders + i + 8, 5);
+								waddstr(items[i + totalFolders + 2], fm->GetFiles()[i+selected-fm->GetFolders().size()].c_str());
+								totalPrint++;
+							}
+						wbkgd(items[2], COLOR_PAIR(1));
+						currentPos=0;
+					}
+				}
+            printw("selected: %i ", selected);
+            printw("count: %i ", count);
+            } 
+            else {
+				if(selected!=0)
+				{
+					selected--;
+					currentPos--;
+				}
+				if(currentPos==-1){
+					//selected-=(1);
+                werase(items[1]);
+                int i = 0;
+                int totalPrint=0;
+                if(fm->GetFolders().size()>(unsigned)selected)
+                for (i = 0; i < (signed)fm->GetFolders().size()-selected; i++) {
+                    items[i + 2] = subwin(items[1], 1, 17, i + 8, 5);
+                    wattron(items[i + 2], COLOR_PAIR(6));
+                    waddstr(items[i + 2], fm->GetFolders()[i+selected].c_str());
+                    wattroff(items[i + 2], COLOR_PAIR(6));
+                    totalPrint++;
+                }
+                int totalFolders = i;
+                if((fm->GetFiles().size()+fm->GetFolders().size())>(unsigned)selected)
+                for (unsigned int i = 0; i < (fm->GetFiles().size()+fm->GetFolders().size())-selected; i++) {
+                    items[i + totalFolders + 2] = subwin(items[1], 1, 17, totalFolders + i + 8, 5);
+                    waddstr(items[i + totalFolders + 2], fm->GetFiles()[i+selected-fm->GetFolders().size()].c_str());
+                    totalPrint++;
+                }
+                wbkgd(items[2], COLOR_PAIR(1));
+                //selected=0;
+                currentPos=0;
+                //count=totalPrint;
             }
-            //if(selected>(y-12))
-            //{
-            //}
-            wbkgd(items[selected + 2], COLOR_PAIR(1));
-            wnoutrefresh(items[selected + 2]);
+            /*printw("s: %i ", selected);
+            printw("c: %i ", count);
+            printw("cP: %i ", currentPos);*/
+            }
+            wbkgd(items[currentPos+2], COLOR_PAIR(1));
+            wnoutrefresh(items[currentPos + 2]);
             doupdate();
+            wrefresh(items[1]);
+            
         } else if (key == ESCAPE) {
             return -1;
         } else if (key == ENTER) {
+            //printw("SELECTED %i", selected);
+            //printw("currentPath %s", fm->GetFolders()[selected].c_str());
+            usleep(10);
+            refresh();
             return selected;
         } else if (key == KEY_RESIZE) {
             CurrentPath = ".";
@@ -988,8 +1119,6 @@ WINDOW **GUI::maps_win() {
     wbkgd(items[0], COLOR_PAIR(2));
     box(items[0], ACS_VLINE, ACS_HLINE);
     items[1] = subwin(items[0], y - 8, x - 8, 6, 4);
-    scrollok(items[1], true);
-    idlok(items[1], true);
     unsigned int i = 0;
     for (i = 0; i < fm->GetFolders().size(); i++) {
         items[i + 2] = subwin(items[1], 1, 17, i + 8, 5);

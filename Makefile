@@ -8,7 +8,7 @@ RM=rm
 LIBS=-lncurses -lpthread
 
 SRCS=Simulator.cpp Field.cpp Game.cpp OpenListItem.cpp Supaplex.cpp TSPSolver.cpp stdafx.cpp
-SRCS2=Simulator.cpp Field.cpp Game.cpp OpenListItem.cpp FileManager.cpp GUI-ascii.cpp main.cpp TSPSolver.cpp stdafx.cpp
+SRCS2=Simulator.cpp Field.cpp Game.cpp OpenListItem.cpp FileManager.cpp GameHistory.cpp GUI-ascii.cpp main.cpp TSPSolver.cpp stdafx.cpp
 
 OBJS:=$(SRCS:.cpp=.o)
 OBJS:=$(addprefix $(OBJDIR)/,$(OBJS))
