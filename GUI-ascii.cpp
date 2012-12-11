@@ -21,7 +21,7 @@ GUI::GUI() {
     init_curses();
     fm = new FileManager();
     ESCDELAY = 0;
-    CurrentPath = "Maps";
+    CurrentPath = ".";
     x = getmaxx(stdscr); //terminal size
     y = getmaxy(stdscr);
     game_win = subwin(stdscr, y - 5, x - 4, 4, 2); //size of game window
@@ -245,7 +245,7 @@ void GUI::hotkeys(int key) {
 				{
 					game=history->GetGameState();
 					str.erase();
-					for(int j=0; j<game.GetTrace().size(); j++)
+					for(unsigned int j=0; j<game.GetTrace().size(); j++)
 					{
 						str+=game.GetTrace()[j];
 					}
@@ -260,7 +260,7 @@ void GUI::hotkeys(int key) {
 				{
 					game=history->GetGameState();
 					str.erase();
-					for(int j=0; j<game.GetTrace().size(); j++)
+					for(unsigned int j=0; j<game.GetTrace().size(); j++)
 					{
 						str+=game.GetTrace()[j];
 					}
@@ -312,7 +312,7 @@ void GUI::hotkeys(int key) {
             break;
         case 18://ctrl-r
             if (selectedMap != -1) {
-                if (NewGame(fm->GetFiles()[selectedMap].c_str()) != -1)
+                if (NewGame(fm->GetFiles()[selectedMap - fm->GetFolders().size()].c_str()) != -1)
                     current_window = 1;
                 else
                     current_window = 0;
@@ -607,7 +607,7 @@ void GUI::resize_refresh() {
                 resize_refresh();
                 return;
             }
-            delete_menu(menu_items, (fm->GetFolders().size() + fm->GetFiles().size() + 2));
+           // delete_menu(menu_items, (2+fm->GetFiles().size()+fm->GetFolders().size()));
             if ((unsigned) selectedMap >= fm->GetFolders().size()) {
                 if (NewGame(fm->GetFiles()[selectedMap - fm->GetFolders().size()].c_str()) != -1) {
                     current_window = 1;
@@ -616,6 +616,7 @@ void GUI::resize_refresh() {
                 }
             } else {
                 CurrentPath = fm->GetFolders()[selectedMap];
+                usleep(1000);
                 fm->ReadFolder(CurrentPath.c_str());
             }
             CurrentPath = ".";
@@ -911,6 +912,7 @@ int GUI::scroll_maps(WINDOW **items) {
 				}
                 if ((selected%(y - 10))==0) 
                 {
+                    //CurrentPath=".";
 					werase(items[1]);
 					int i = 0;
 					int totalPrint=0;
@@ -941,8 +943,8 @@ int GUI::scroll_maps(WINDOW **items) {
 						currentPos=0;
 					}
 				}
-            printw("selected: %i ", selected);
-            printw("count: %i ", count);
+            //printw("selected: %i ", selected);
+            //printw("count: %i ", count);
             } 
             else {
 				if(selected!=0)
@@ -967,17 +969,12 @@ int GUI::scroll_maps(WINDOW **items) {
                 if((fm->GetFiles().size()+fm->GetFolders().size())>(unsigned)selected)
                 for (unsigned int i = 0; i < (fm->GetFiles().size()+fm->GetFolders().size())-selected; i++) {
                     items[i + totalFolders + 2] = subwin(items[1], 1, 17, totalFolders + i + 8, 5);
-                    waddstr(items[i + totalFolders + 2], fm->GetFiles()[i+selected-fm->GetFolders().size()].c_str());
+                    waddstr(items[i + totalFolders + 2], fm->GetFiles()[i+selected-fm->GetFolders().size()+totalFolders].c_str());
                     totalPrint++;
                 }
                 wbkgd(items[2], COLOR_PAIR(1));
-                //selected=0;
                 currentPos=0;
-                //count=totalPrint;
             }
-            /*printw("s: %i ", selected);
-            printw("c: %i ", count);
-            printw("cP: %i ", currentPos);*/
             }
             wbkgd(items[currentPos+2], COLOR_PAIR(1));
             wnoutrefresh(items[currentPos + 2]);
@@ -987,10 +984,7 @@ int GUI::scroll_maps(WINDOW **items) {
         } else if (key == ESCAPE) {
             return -1;
         } else if (key == ENTER) {
-            //printw("SELECTED %i", selected);
-            //printw("currentPath %s", fm->GetFolders()[selected].c_str());
-            usleep(10);
-            refresh();
+            usleep(10000);
             return selected;
         } else if (key == KEY_RESIZE) {
             CurrentPath = ".";

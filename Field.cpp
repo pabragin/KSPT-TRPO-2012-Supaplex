@@ -117,8 +117,6 @@ int Field::CheckMine()
 		}
 
 		if (i == 17) {
-			int a;
-			a = 0;
 		}
 
 		for (size_t k = 0; k < mapWidth; k++) {
