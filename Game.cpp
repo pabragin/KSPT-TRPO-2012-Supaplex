@@ -85,7 +85,7 @@ void Game::MoveRobot(_Command COMMAND)
 	int x = xold, y = yold;
 
 	UpdateScore();
-
+	trace.push_back(COMMAND);
 	switch (COMMAND) {
 	case RIGHT:
 		y++;

@@ -103,6 +103,73 @@ void Field::SaveMap(ostream &sout)
 	sout << endl;
 }
 
+// Description: Checks whether mine is correct or not
+// Returns: 0 if mine is correct, -1 otherwise
+int Field::CheckMine()
+{
+	for (size_t i = 0; i < mapHeight; i++) {
+		for (size_t j = 0; j < mapWidth; j++) {
+			if (map[i][j] != EMPTY) {
+				if (map[i][j] != WALL && map[i][j] != CLOSED_LIFT) {
+					return -1;
+				} else break;
+			}
+		}
+
+		if (i == 17) {
+		}
+
+		for (size_t k = 0; k < mapWidth; k++) {
+			if (map[i][mapWidth - 1 - k] != EMPTY) {
+				if (map[i][mapWidth - 1 - k] != WALL && map[i][mapWidth - 1 - k] != CLOSED_LIFT) {
+					return -1;
+				} else break;
+			}
+		}
+	}
+
+	for (size_t i = 0; i < mapHeight; i += mapHeight - 1) {
+		size_t index = 0;
+		while (map[i][index] == EMPTY) {
+			index++;
+			if (index == mapWidth && (i != 0 && i != mapHeight - 1))
+				return -1;
+		}
+		for (size_t j = index; j < mapWidth; j++) {
+			if (map[i][j] != WALL && map[i][j] != CLOSED_LIFT) {
+				if (map[i][j] == EMPTY) {
+					while (j < mapWidth) {
+						if (map[i][j] != EMPTY)
+							return -1;
+						j++;
+					}
+					break;
+				} else
+					return -1;
+			}
+		}
+	}
+
+	int robot_num = 0, closed_lift_num = 0;
+	for (size_t i = 0; i < mapHeight; i++) {
+		for (size_t j = 0; j < mapWidth; j++) {
+			if (map[i][j] == ROBOT) {
+				robot_num++;
+			} else if (map[i][j] == CLOSED_LIFT) {
+				closed_lift_num++;
+			} else if (map[i][j] != STONE && map[i][j] != WALL && map[i][j] != EARTH && 
+				map[i][j] != LAMBDA && map[i][j] != EMPTY) {
+					return -1;
+			}
+		}
+	}
+
+	if (robot_num != 1 || closed_lift_num != 1)
+		return -1;
+
+	return 0;
+}
+
 // Description: Changes robot coordinates
 void Field::SetRobot(size_t x, size_t y)
 {
@@ -220,7 +287,7 @@ void Field::UpdateMap()
 			newState[i][j] = WALL;
 		}
 	}
-	
+
 	for (size_t i = 1; i < mapHeight - 1; i++) {
 		for (size_t j = 1; j < mapWidth - 1; j++) {
 			// If (x; y) contains a Rock, and (x; y-1) is Empty:

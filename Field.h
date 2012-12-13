@@ -20,6 +20,7 @@ public:
 
 	int LoadMap(istream &sin);		// loads map from file; fills Field's fields =)
 	void SaveMap(ostream &sout);
+	int CheckMine();
 
 	void SetRobot(size_t x, size_t y);	// changes robot coordinates
 	void SetLiftState(bool isOpen);
