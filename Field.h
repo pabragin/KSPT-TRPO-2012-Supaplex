@@ -15,6 +15,7 @@ class Field
 
 public:
 	Field(void);
+	Field(size_t width, size_t height);
 	Field(const Field & field);
 	~Field(void);
 

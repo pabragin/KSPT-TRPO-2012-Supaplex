@@ -9,6 +9,36 @@ Field::Field(void)
 	robotIsDead = false;
 }
 
+Field::Field(size_t width, size_t height)
+{
+	mapWidth = width;
+	mapHeight = height;
+	liftIsOpen = false;
+	robotIsDead = false;
+
+	map = new char * [mapHeight];
+	for (size_t i = 0; i < mapHeight; i++) {
+		map[i] = new char [mapWidth];
+		for (size_t j = 0; j < mapWidth; j++) {
+			if (i == 1 && j == 1) {
+				map[i][j] = ROBOT;
+			} else if (i == mapHeight - 2 && j == mapWidth - 1) {
+				map[i][j] = CLOSED_LIFT;
+			} else if (i == 0 || i == mapHeight - 1 ||
+					   j == 0 || j == mapWidth - 1) {
+				map[i][j] = WALL;
+			} else {
+				map[i][j] = EMPTY;
+			}
+		}
+	}
+
+	robot.first = 1;
+	robot.second = 1;
+	lift.first = mapHeight - 2;
+	lift.second = mapWidth - 1;
+}
+
 Field::Field(const Field & field)
 {
 	mapWidth = field.mapWidth;
