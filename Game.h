@@ -27,6 +27,7 @@ public:
 	_GameResult GetResult();
 	void SetGameResult(_GameResult result);
 
+        void SetField(Field field);
 	int Init(istream &sin);
 	void Solve(const int & iterations);
 

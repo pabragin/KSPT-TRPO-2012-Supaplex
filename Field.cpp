@@ -12,7 +12,7 @@ Field::Field(void)
 Field::Field(size_t width, size_t height)
 {
 	mapWidth = width;
-	mapHeight = height;
+	mapHeight = ++height;
 	liftIsOpen = false;
 	robotIsDead = false;
 
@@ -22,10 +22,10 @@ Field::Field(size_t width, size_t height)
 		for (size_t j = 0; j < mapWidth; j++) {
 			if (i == 1 && j == 1) {
 				map[i][j] = ROBOT;
-			} else if (i == mapHeight - 2 && j == mapWidth - 1) {
+			} else if (i == mapHeight - 3 && j == mapWidth - 1) {
 				map[i][j] = CLOSED_LIFT;
-			} else if (i == 0 || i == mapHeight - 1 ||
-					   j == 0 || j == mapWidth - 1) {
+			} else if (i == 0 || i == mapHeight - 2 ||
+					(i < mapHeight - 1 && (j == 0 || j == mapWidth - 1))) {
 				map[i][j] = WALL;
 			} else {
 				map[i][j] = EMPTY;
@@ -35,7 +35,7 @@ Field::Field(size_t width, size_t height)
 
 	robot.first = 1;
 	robot.second = 1;
-	lift.first = mapHeight - 2;
+	lift.first = mapHeight - 3;
 	lift.second = mapWidth - 1;
 }
 

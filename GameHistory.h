@@ -15,7 +15,7 @@ public:
 	void SaveState(Game game);
 
 	int Undo(Game game);
-	int Redo();
+	int Redo(Game game);
 
 	Game GetGameState();
 };

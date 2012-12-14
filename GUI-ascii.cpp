@@ -21,6 +21,7 @@ GUI::GUI() {
     pointerposy=0;
     sizeEditorx=100;
     sizeEditory=100;
+    outfilename="out.map";
     currentObject = EMPTY;
     history = new GameHistory();
     init_curses();
@@ -77,13 +78,27 @@ GUI::GUI() {
             if (selected_from_e == 0) {
                 current_window = 8;
                 resize_refresh();
-            } else if (selected_from_e == 2) {
+            } 
+            else if (selected_from_e == 1) {
+                current_window = 11;
+                resize_refresh();
+            }else if (selected_from_e == 2) {
                 current_window = 9;
                 resize_refresh();
             }
         }
         hotkeys(key);
-        printw("%i", key); //print number of char
+        //printw("%i", key); //print number of char
+        if(current_window==1 && game.GetResult()==1)
+        {
+                current_window=15;
+                resize_refresh();
+        }
+        else if(current_window==1 && (game.GetResult()==2 || game.GetResult()==3))
+        {
+                current_window=16;
+                resize_refresh();
+        }
         if (key == KEY_RESIZE) {
             resize_refresh();
         }
@@ -120,7 +135,7 @@ int GUI::NewGame(const char *FileName) {
     return 0;
 }
 
-int GUI::NewGame(const char *FileName) {
+int GUI::NewGame(int xxx, int yyy) {
     firstStart = true;
     str = "";
     strC = "";
@@ -130,6 +145,7 @@ int GUI::NewGame(const char *FileName) {
     pointerposy=0;
     currentObject = EMPTY;
     history->Reset();
+    game.SetField(Field(xxx, yyy));
     return 0;
 }
 
@@ -153,6 +169,18 @@ void GUI::RobotCentred(void) {
                 starty = game.GetField()->GetHeight()-(y - 10);
         else
             starty = 0;
+    }
+    if(current_window==8)
+    {
+        if (((y - 14) + starty)<(game.GetField()->GetRobot().first) || (game.GetField()->GetRobot().first) < starty + 2) {
+        if ((aa = game.GetField()->GetRobot().first - ((y - 12) / 2)) > 0)
+            if (game.GetField()->GetHeight() - aa > (y - 7))
+                starty = aa;
+            else
+                starty = game.GetField()->GetHeight()-(y - 7);
+        else
+            starty = 0;
+    }
     }
 }
 bool block = false;
@@ -334,7 +362,7 @@ void GUI::hotkeys(int key) {
         case 10:
             if(current_window==7)
             {
-                game.GetField()->SetObject(pointerposy, pointerposx, currentObject);
+                game.GetField()->SetObject(pointerposy+starty, pointerposx+startx, currentObject);
                 resize_refresh();
             }
             break;
@@ -361,24 +389,30 @@ void GUI::hotkeys(int key) {
                     if (str.size() != 0)
                         str.resize(str.size() - 1);
                 }
-                game.GetField()->UpdateMap();
+                //game.GetField()->UpdateMap();
                 resize_refresh();
             }
             break;
         case 93://redo button
             if (current_window == 1) {
-                if (history->Redo() == 0) {
+                if (history->Redo(game) == 0) {
                     game = history->GetGameState();
                     str += game.GetTrace()[str.size() + 1];
                 }
-                game.GetField()->UpdateMap();
+                //game.GetField()->UpdateMap();
                 resize_refresh();
             }
             break;
         case 259://up button, scroll up
-            if (current_window == 1 && starty != 0) {
+            if ((current_window == 1 && starty != 0)) {
                 starty--;
                 resize_refresh();
+            }
+            else if(current_window == 7)
+            {
+                if(starty!=0)
+                    starty--;
+                    resize_refresh();
             }
             break;
         case 258://down button, scroll down
@@ -388,16 +422,28 @@ void GUI::hotkeys(int key) {
                     resize_refresh();
                 }
             }
+            else if(current_window == 7)
+            {
+                if (game.GetField()->GetHeight() - starty > (y - 7)) {
+                    starty++;
+                    resize_refresh();
+                }
+            }
             break;
         case 260://left button, scroll left
-            if (current_window == 1 && startx != 0) {
+            if ((current_window == 1 && startx != 0)) {
 
+                startx--;
+                resize_refresh();
+            }
+            else if(current_window == 7 && startx != 0)
+            {
                 startx--;
                 resize_refresh();
             }
             break;
         case 261://right button, scroll right
-            if (current_window == 1) {
+            if (current_window == 1||current_window == 7) {
                 if (game.GetField()->GetWidth() - startx > (x - 22)) {
                     startx++;
                     resize_refresh();
@@ -420,6 +466,10 @@ void GUI::hotkeys(int key) {
             current_window = 8;
             resize_refresh();
             break;
+        case 22://ctrl-v//save map
+            current_window = 11;
+            resize_refresh();
+            break;
         case 18://ctrl-r
             if (selectedMap != -1) {
                 if (NewGame(fm->GetFiles()[selectedMap - fm->GetFolders().size()].c_str()) != -1)
@@ -439,6 +489,10 @@ void GUI::hotkeys(int key) {
             break;
         case 1://ctrl-a
             current_window = 3;
+            resize_refresh();
+            break;
+        case 23://ctrl-w
+            current_window=8;
             resize_refresh();
             break;
         case 269://f5
@@ -774,6 +828,67 @@ int GUI::y_Line() {
     return 0;
 }
 
+int GUI::filename_Line() {
+    int key;
+    int xx;
+    int yy;
+    string strTT="";
+    bool f = true;
+    while (f == true) {
+        key = getch();
+        if ((key >= 97 && key <= 122)||key==46) {
+            waddch(filename, key);
+            wrefresh(filename);
+            strTT += key;
+        } else if (key == BACKSPACE) {
+            getyx(filename, yy, xx);
+            if (yy != 0 && xx == 0) {
+                yy = yy - 1;
+                xx = getmaxx(filename);
+                mvwaddstr(filename, yy, xx - 1, " ");
+                strTT = strTT.substr(0, strTT.size() - 1);
+                wmove(filename, yy, xx - 1);
+                wrefresh(filename);
+            } else if (yy == 0 && xx == 0) {
+                wmove(filename, 0, 0);
+                werase(filename);
+                if (strTT.size() >= (unsigned) getmaxx(filename)*(getmaxy(filename) - 1)) {
+                    waddstr(filename, strTT.substr(strTT.size()-(getmaxx(filename)*(getmaxy(filename) - 1)), strTT.size()).c_str());
+                } else {
+                    waddstr(filename, strTT.c_str());
+                }
+                wrefresh(filename);
+            } else {
+                mvwaddstr(filename, yy, xx - 1, " ");
+                strTT = strTT.substr(0, strTT.size() - 1);
+                wmove(filename, yy, xx - 1);
+                wrefresh(filename);
+            }
+        } else if (key == ENTER) {
+            current_window = 12;
+            if(strTT.size()!=0)
+                outfilename = strTT;
+            resize_refresh();
+            return 0;
+        } else if (key == KEY_RESIZE) {
+            resize_refresh();
+            return 0;
+        } else if (key == ESCAPE) {
+            current_window = 11;
+            resize_refresh();
+            return 0;
+        }
+        getyx(y_line, yy, xx);
+        if (yy == getmaxy(y_line) - 1 && xx == getmaxx(y_line) - 1) {
+            wmove(y_line, 0, 0);
+            werase(y_line);
+            waddstr(y_line, strTT.substr(strTT.size()-(getmaxx(y_line)*(getmaxy(y_line) - 1)), strTT.size()).c_str());
+            wrefresh(y_line);
+        }
+    }
+    return 0;
+}
+
 void GUI::DrawAddForMenu() {
     wmove(menubar, 0, 42);
     waddstr(menubar, "Config");
@@ -867,7 +982,7 @@ void GUI::resize_refresh() {
         else if (current_window == 7)//map editor
         {
             WINDOW **gw = draw_map_editor();
-            draw_map(game.GetField()->GetMap(), game.GetField()->GetWidth() - 1, game.GetField()->GetHeight() - 1, startx, starty, gw[0]); 
+            draw_map_edit(game.GetField()->GetMap(), game.GetField()->GetWidth() - 1, game.GetField()->GetHeight() - 1, startx, starty, gw[0]); 
             mvwaddch(gw[0], pointerposy+1, pointerposx+1, currentObject | COLOR_PAIR(1));
             touchwin(stdscr);
             refresh();
@@ -895,7 +1010,6 @@ void GUI::resize_refresh() {
                 }
             } else {
                 CurrentPath = fm->GetFolders()[selectedMap];
-                //usleep(1000);
                 fm->ReadFolder(CurrentPath.c_str());
             }
             CurrentPath = ".";
@@ -905,18 +1019,80 @@ void GUI::resize_refresh() {
         {
             draw_x_line();
             x_Line();
-            touchwin(stdscr);
-            refresh();
         }
         else if (current_window == 10)//size y window
         {
-            // WINDOW **gw = draw_map_editor();
-            //draw_map(game.GetField()->GetMap(), game.GetField()->GetWidth() - 1, game.GetField()->GetHeight() - 1, startx, starty, gw[0]);
-            //mvwaddch(gw[0], pointerposy+1, pointerposx+1, currentObject | COLOR_PAIR(1));
             draw_y_line();
             y_Line();
-            touchwin(stdscr);
-            refresh();
+            NewGame(sizeEditorx, sizeEditory);
+            resize_refresh();
+            //current_window=7;
+        }
+        else if (current_window == 11)//filename window
+        {
+            WINDOW **gw = draw_map_editor();
+            draw_map_edit(game.GetField()->GetMap(), game.GetField()->GetWidth() - 1, game.GetField()->GetHeight() - 1, startx, starty, gw[0]); 
+            mvwaddch(gw[0], pointerposy+1, pointerposx+1, currentObject | COLOR_PAIR(1));
+            draw_file_name();
+            filename_Line();
+        }
+        else if (current_window == 12)
+        {
+            fm->ReadFolder(CurrentPath.c_str());
+            game_win = subwin(stdscr, y - 5, x - 4, 4, 2); //size of game window
+            wbkgd(game_win, COLOR_PAIR(2));
+            WINDOW **menu_items;
+            menu_items = maps_win();
+            selectedMap = scroll_maps(menu_items);
+            if (selectedMap == -1) {
+                current_window = 0;
+                CurrentPath = ".";
+                resize_refresh();
+                return;
+            }
+            delete_menu(menu_items, (2 + fm->GetFiles().size() + fm->GetFolders().size()));
+            if ((unsigned) selectedMap >= fm->GetFolders().size()) {
+                if (game.GetField()->CheckMine()==0) {
+                    current_window=13;
+                    ofstream file_object(outfilename.c_str());
+                    game.GetField()->SaveMap(file_object);
+                } else {
+                    current_window = 14;
+                }
+            } else {
+                CurrentPath = fm->GetFolders()[selectedMap];
+                fm->ReadFolder(CurrentPath.c_str());
+            }
+            CurrentPath = ".";
+            resize_refresh();
+        }
+        else if(current_window ==13)
+        {
+            TipWindow("Successfuly saved!");
+            getch();
+            current_window=7;
+            resize_refresh();
+        }
+        else if(current_window ==14)
+        {
+            TipWindow("Error saving file!");
+            getch();
+            current_window=7;
+            resize_refresh();
+        }
+        else if(current_window ==15)
+        {
+            TipWindow("You lose!");
+            getch();
+            current_window=1;
+            resize_refresh();
+        }
+        else if(current_window ==16)
+        {
+            TipWindow("You pass!");
+            getch();
+            current_window=1;
+            resize_refresh();
         }else if (current_window == 0) {
             touchwin(stdscr);
             refresh();
@@ -1117,6 +1293,43 @@ void GUI::draw_map(char **map, int column, int row, int start_x, int start_y, WI
     refresh();
 }
 
+void GUI::draw_map_edit(char **map, int column, int row, int start_x, int start_y, WINDOW *game_win) {
+    WINDOW *gameWin = subwin(game_win, y - 8, x - 22, 5, 3);
+    wbkgd(gameWin, COLOR_PAIR(2));
+    for (int i = start_y; i <= row; i++) {
+        for (int j = start_x; j <= column; j++) {
+            switch (map[i][j]) {
+                case 'R':
+                    mvwinsch(gameWin, i - start_y, j - start_x, map[i][j] | COLOR_PAIR(3));
+                    break;
+                case '*':
+                    mvwinsch(gameWin, i - start_y, j - start_x, map[i][j] | COLOR_PAIR(12));
+                    break;
+                case '.':
+                    mvwinsch(gameWin, i - start_y, j - start_x, map[i][j] | COLOR_PAIR(11));
+                    break;
+                case '\\':
+                    mvwinsch(gameWin, i - start_y, j - start_x, map[i][j] | COLOR_PAIR(6));
+                    break;
+                case 'L':
+                    mvwinsch(gameWin, i - start_y, j - start_x, map[i][j] | COLOR_PAIR(9));
+                    break;
+                case 'O':
+                    mvwinsch(gameWin, i - start_y, j - start_x, map[i][j] | COLOR_PAIR(9));
+                    break;
+                case '@':
+                    mvwinsch(gameWin, i - start_y, j - start_x, map[i][j] | A_BLINK);
+                    break;
+                default:
+                    mvwinsch(gameWin, i - start_y, j - start_x, map[i][j]);
+                    break;
+            }
+        }
+    }
+    touchwin(stdscr);
+    refresh();
+}
+
 void GUI::draw_points(int Score, int Moves, int Lambdas, const char *Mov, WINDOW **frames) {
     char Score_str[5];
     sprintf(Score_str, "%d", Score);
@@ -1134,6 +1347,18 @@ void GUI::draw_points(int Score, int Moves, int Lambdas, const char *Mov, WINDOW
     else
         mvwprintw(frames[2], 1, 8, s.c_str());
     touchwin(stdscr);
+    refresh();
+}
+
+void GUI::TipWindow(string message) {
+    WINDOW **items;
+    items = (WINDOW **) malloc(2 * sizeof (WINDOW *));
+    items[0] = subwin(stdscr,4, x - 6, y / 2 - 3, 3);
+    wbkgd(items[0], COLOR_PAIR(2));
+    box(items[0], ACS_VLINE, ACS_HLINE);
+    items[1] = subwin(items[0], 1, 39, y / 2 - 2, 4);
+    waddstr(items[1], message.c_str());
+    wrefresh(items[0]);
     refresh();
 }
 
@@ -1299,7 +1524,6 @@ int GUI::scroll_maps(WINDOW **items) {
                     werase(items[1]);
                     int i = 0;
                     int totalPrint = 0;
-                    int nana = 0;
                         if (fm->GetFolders().size()>(unsigned) selected)
                             for (i = 0; totalPrint<(y-11) &&  i < (signed)fm->GetFolders().size() - selected; i++) {
                                 items[i + 2] = subwin(items[1], 1, 30, i + 8, 5);
@@ -1615,7 +1839,7 @@ WINDOW **GUI::draw_x_line() {
 WINDOW **GUI::draw_y_line() {
     WINDOW **items;
     items = (WINDOW **) malloc(3 * sizeof (WINDOW *));
-    items[0] = newwin(4, x - 6, y / 2 - 3, 3);
+    items[0] = subwin(stdscr,4, x - 6, y / 2 - 3, 3);
     wbkgd(items[0], COLOR_PAIR(2));
     box(items[0], ACS_VLINE, ACS_HLINE);
     items[1] = subwin(items[0], 1, 39, y / 2 - 2, 4);
@@ -1623,6 +1847,21 @@ WINDOW **GUI::draw_y_line() {
     waddstr(items[1], "Please, enter height of map");
     wbkgd(items[2], COLOR_PAIR(8));
     y_line = items[2];
+    wrefresh(items[0]);
+    return items;
+}
+
+WINDOW **GUI::draw_file_name() {
+    WINDOW **items;
+    items = (WINDOW **) malloc(3 * sizeof (WINDOW *));
+    items[0] = newwin(4, x - 6, y / 2 - 3, 3);
+    wbkgd(items[0], COLOR_PAIR(2));
+    box(items[0], ACS_VLINE, ACS_HLINE);
+    items[1] = subwin(items[0], 1, 39, y / 2 - 2, 4);
+    items[2] = subwin(items[0], 1, x - 8, y / 2 - 1, 4);
+    waddstr(items[1], "Please, enter new file name:");
+    wbkgd(items[2], COLOR_PAIR(8));
+    filename = items[2];
     wrefresh(items[0]);
     return items;
 }
@@ -1637,4 +1876,3 @@ void GUI::draw_game_name() {
     printw("SUPAPLEX");
     attroff(A_BLINK | A_BOLD | A_UNDERLINE);
 }
-

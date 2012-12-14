@@ -33,12 +33,14 @@ int GameHistory::Undo(Game game)
 	return 0;
 }
 
-int GameHistory::Redo()
+int GameHistory::Redo(Game game)
 {
 	if (redoStack.empty()) return -1;
-	state = redoStack.back();
-	redoStack.pop_back();
-	undoStack.push_back(state);
+        state = redoStack.back();
+        redoStack.pop_back();
+        //if (redoStack.size() != 1) {
+                undoStack.push_back(game);
+        //}
 	return 0;
 }
 

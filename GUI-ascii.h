@@ -34,6 +34,8 @@ private:
     WINDOW *commands_line; //commands line must be input here
     WINDOW *time_line; //time line must be input here
     WINDOW *x_line, *y_line; //x and y must be input here
+    WINDOW *filename_line; //x and y must be input here
+    WINDOW *filename;
     int x; //terminal size
     int y;
     FileManager *fm; //File manager
@@ -47,22 +49,28 @@ private:
     bool firstStart;
     int pointerposx, pointerposy; //position of pointer in map editor
     int sizeEditorx, sizeEditory;//size of map
+    string outfilename;
     char currentObject;
     void init_curses();
     void draw_menubar();
     WINDOW **draw_game_win();
     WINDOW **draw_map_editor();
+    void draw_map_edit(char **map, int column, int row, int start_x, int start_y, WINDOW *game_win);
+    void TipWindow(string message);
     void about_game_win();
     void help_game_win();
     void delete_menu(WINDOW **items, int count);
     WINDOW **draw_menu();
     WINDOW **draw_menu_help();
     WINDOW **draw_menu_editor();
+    WINDOW **draw_file_name();
     WINDOW **maps_win();
+    WINDOW **maps_win_e();//maps for saving window
     int scroll_menu(WINDOW **items);
     int scroll_help(WINDOW **items);
     int scroll_maps(WINDOW **items);
     int scroll_menu_editor(WINDOW **items);
+    int scroll_folders(WINDOW **items);
     void draw_game_name();
     void hotkeys(int key);
     WINDOW **draw_enter_commands();
@@ -78,6 +86,7 @@ private:
     int time_Line(void); //функция ввода времени
     int x_Line();//size x of editors map
     int y_Line();//size y of editors map
+    int filename_Line();
     void DrawAddForMenu(void); //дополнительное меню в шапке
 };
 
