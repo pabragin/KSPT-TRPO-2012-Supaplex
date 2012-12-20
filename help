@@ -1,0 +1,56 @@
+Hi user! Now you will play game named Supaplex. 
+Before you start playing levels, you should first know some terminology and some goal of
+the game.
+Your task is to collect points. You can do it by taking treasures - lambdas(\)!
+
+On your way you will find a lot of problems - Rocks(*), Walls(#), Earths(.),smart traps.
+_________________________________________________________________________________________
+The rules are simple:
+1 move   = -1 score;
+1 lambda = +25 scores;
+But if you can finde lift (L), after you finde each of lambdas -> 1 lambda = 50 scores.
+
+You can also be crushed by the Rocks(*) - do not stand under the Rocks!!!!!!
+On the next turne if you can not move because of fear of death - you will able to use 
+teleport(command q).You can also wait as a coward (command e), but cowards lose 1 score 
+per turne.
+
+Now you know some basics, good luck my friend ( also see command list) !!!!!!!!!
+_________________________________________________________________________________________
+You can start the game using "Menu" (F1) -> "New game" (ctrl-N) -> select an map using 
+"up" and "down" buttons, do choice using "Enter". After game starts use commands from
+command list.
+_________________________________________________________________________________________
+Command list:
+w - move up
+a - move left
+s - move down
+d - move right
+q - use teleport (abort)
+e - wait
+_________________________________________________________________________________________
+To hard for you? Trust the robot (R) - hi knows all batter then you...
+Just use "ctrl-o" for automatic solve. 
+Use "ctrl-n" for the new game and "ctrl-r" to reset the game. Use "ctrl-e" for exit.
+Love actions? We have a surprise for you! You can set the speed of the robot using "+"
+and "-" buttons (use at any time). And only for you - rewind! Repeat the best moments
+using "[" (forward) and "]"(back) buttons. 
+_________________________________________________________________________________________
+
+Still here? Have an iron balls like robot? Use map editor!
+Push "F3" button. You will be able to create you own map, you own adventure...
+Use "ctrl-d" to load existing map, "ctrl-v" to save map and "ctrl-w" to create new map.
+Choose object by using "1-7" buttons:
+1 - "R" - robot ( only 1 robot on the map)
+2 - "*" - rock
+3 - "#" - wall
+4 - "." - earth
+5 - "\" -lambda
+6 - "L" -lift opened (1 lift on the map)
+7 - "O" -lift closed (1 lift on the map)
+Put this objects on the map by using "enter". For navigation use "arrow" buttons 
+(scrolling) + "W" "A" "S" "D"(move the cursor).
+Piece of cake!!! 
+_________________________________________________________________________________________
+
+Read information about game using "F2" -> "ctrl-a" .

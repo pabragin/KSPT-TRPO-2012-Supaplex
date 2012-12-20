@@ -16,6 +16,11 @@ GUI::GUI() {
     int key, selected_from_m, selected_from_h, selected_from_e;
     startx = 0;
     starty = 0;
+    starthelpx=0;
+    starthelpy=0;
+    HelpHeight=0;
+    HelpWidth=0;
+    strT="";
     startpos = 0;
     pointerposx=0;
     pointerposy=0;
@@ -27,7 +32,7 @@ GUI::GUI() {
     init_curses();
     fm = new FileManager();
     ESCDELAY = 0;
-    CurrentPath = "Maps";
+    CurrentPath = "./Maps";
     x = getmaxx(stdscr); //terminal size
     y = getmaxy(stdscr);
     game_win = subwin(stdscr, y - 5, x - 4, 4, 2); //size of game window
@@ -37,6 +42,8 @@ GUI::GUI() {
     draw_menubar();
     selectedMap = -1;
     current_window = 0; //current window is empty
+    selected_from_m=0;
+    key = 0;
     do {
         WINDOW **menu_items, **help_items, **editor_items;
         key = getch();
@@ -89,16 +96,6 @@ GUI::GUI() {
         }
         hotkeys(key);
         //printw("%i", key); //print number of char
-        if(current_window==1 && game.GetResult()==1)
-        {
-                current_window=15;
-                resize_refresh();
-        }
-        else if(current_window==1 && (game.GetResult()==2 || game.GetResult()==3))
-        {
-                current_window=16;
-                resize_refresh();
-        }
         if (key == KEY_RESIZE) {
             resize_refresh();
         }
@@ -107,6 +104,42 @@ GUI::GUI() {
 }
 
 GUI::~GUI() {
+}
+
+int GUI::LoadHelp()
+{
+        ifstream sin("help");
+        if ( ! sin ) {
+            return -1;
+        }
+	HelpWidth = -1;
+	HelpHeight = -1;
+	help = NULL;
+	vector<string> buf;
+	string str;
+	size_t width = 0;
+
+	// Counting mine's dimension
+	while (!sin.eof()) {
+		getline(sin, str);
+		buf.push_back(str);
+		if (str.size() > width) width = str.size(); // remember the longest row
+	}
+	HelpWidth = width;
+	HelpHeight = buf.size();
+	sin.seekg(0, ios::beg);
+	help = new char * [HelpHeight];
+	for (size_t i = 0; i < HelpHeight; i++) {
+		help[i] = new char [HelpWidth];
+		for (size_t j = 0; j < HelpWidth; j++) {
+                    if(j<buf[i].length())
+			help[i][j] = buf.at(i)[j];
+                    else
+                        help[i][j]= ' ';
+		}
+	}
+        HelpWidth =HelpWidth-1;
+	return 0;
 }
 
 void GUI::start(istream & sin) {
@@ -253,6 +286,14 @@ void GUI::hotkeys(int key) {
                 game.MoveRobot(UP);
                 str += "U";
                 RobotCentred();
+                if(current_window==1 && game.GetResult()==1)
+                {
+                       current_window=15;
+                }
+                else if(current_window==1 && (game.GetResult()==2 || game.GetResult()==3))
+                {
+                current_window=16;
+                }
                 resize_refresh();
             }
             else if(current_window==7 && pointerposy!=0)
@@ -267,6 +308,14 @@ void GUI::hotkeys(int key) {
                 game.MoveRobot(DOWN);
                 str += "D";
                 RobotCentred();
+                if(current_window==1 && game.GetResult()==1)
+                {
+                       current_window=15;
+                }
+                else if(current_window==1 && (game.GetResult()==2 || game.GetResult()==3))
+                {
+                current_window=16;
+                }
                 resize_refresh();
             }
             else if(current_window==7 && pointerposy<game.GetField()->GetHeight()-2)
@@ -281,6 +330,14 @@ void GUI::hotkeys(int key) {
                 game.MoveRobot(LEFT);
                 str += "L";
                 RobotCentred();
+                if(current_window==1 && game.GetResult()==1)
+                {
+                       current_window=15;
+                }
+                else if(current_window==1 && (game.GetResult()==2 || game.GetResult()==3))
+                {
+                current_window=16;
+                }
                 resize_refresh();
             }
             else if(current_window==7 && pointerposx!=0)
@@ -295,6 +352,14 @@ void GUI::hotkeys(int key) {
                 game.MoveRobot(RIGHT);
                 str += "R";
                 RobotCentred();
+                if(current_window==1 && game.GetResult()==1)
+                {
+                       current_window=15;
+                }
+                else if(current_window==1 && (game.GetResult()==2 || game.GetResult()==3))
+                {
+                current_window=16;
+                }
                 resize_refresh();
             }
             else if(current_window==7 && pointerposx<game.GetField()->GetWidth()-1)
@@ -371,6 +436,14 @@ void GUI::hotkeys(int key) {
                 history->SaveState(game);
                 game.MoveRobot(ABORT);
                 str += "A";
+                if(current_window==1 && game.GetResult()==1)
+                {
+                       current_window=15;
+                }
+                else if(current_window==1 && (game.GetResult()==2 || game.GetResult()==3))
+                {
+                current_window=16;
+                }
                 resize_refresh();
             }
             break;
@@ -379,6 +452,14 @@ void GUI::hotkeys(int key) {
                 history->SaveState(game);
                 game.GetField()->UpdateMap();
                 str += "W";
+                if(current_window==1 && game.GetResult()==1)
+                {
+                       current_window=15;
+                }
+                else if(current_window==1 && (game.GetResult()==2 || game.GetResult()==3))
+                {
+                current_window=16;
+                }
                 resize_refresh();
             }
             break;
@@ -399,7 +480,6 @@ void GUI::hotkeys(int key) {
                     game = history->GetGameState();
                     str += game.GetTrace()[str.size() + 1];
                 }
-                //game.GetField()->UpdateMap();
                 resize_refresh();
             }
             break;
@@ -412,6 +492,12 @@ void GUI::hotkeys(int key) {
             {
                 if(starty!=0)
                     starty--;
+                    resize_refresh();
+            }
+            else if(current_window == 2)
+            {
+                if(starthelpy!=0)
+                    starthelpy--;
                     resize_refresh();
             }
             break;
@@ -429,6 +515,12 @@ void GUI::hotkeys(int key) {
                     resize_refresh();
                 }
             }
+            else if(current_window == 2)
+            {
+                if(HelpHeight-starthelpy>(y-7))
+                    starthelpy++;
+                    resize_refresh();
+            }
             break;
         case 260://left button, scroll left
             if ((current_window == 1 && startx != 0)) {
@@ -441,6 +533,12 @@ void GUI::hotkeys(int key) {
                 startx--;
                 resize_refresh();
             }
+            else if(current_window == 2)
+            {
+                if(starthelpx!=0)
+                    starthelpx--;
+                    resize_refresh();
+            }
             break;
         case 261://right button, scroll right
             if (current_window == 1||current_window == 7) {
@@ -448,6 +546,12 @@ void GUI::hotkeys(int key) {
                     startx++;
                     resize_refresh();
                 }
+            }
+            else if(current_window == 2)
+            {
+                if(HelpWidth - starthelpx>(x-8))
+                    starthelpx++;
+                    resize_refresh();
             }
             break;
         case ESCAPE:
@@ -920,6 +1024,7 @@ void GUI::resize_refresh() {
         } else if (current_window == 2) {
             game_win = subwin(stdscr, y - 5, x - 4, 4, 2); //size of game window
             wbkgd(game_win, COLOR_PAIR(2));
+            LoadHelp();
             help_game_win();
             touchwin(stdscr);
             refresh();
@@ -1381,9 +1486,12 @@ void GUI::help_game_win() {
     WINDOW *f = subwin(game_win, y - 5, x - 6, 4, 3); //игровое поле
     wbkgd(f, COLOR_PAIR(2));
     box(f, ACS_VLINE, ACS_HLINE);
-    wmove(f, 1, 1);
-    wattron(f, COLOR_PAIR(3));
-    waddstr(f, "This game is not ready yet");
+    WINDOW *helpwin = subwin(f, y - 7, x - 8, 5, 4);
+    for (int i = starthelpy; i <= HelpHeight; i++) {
+        for (int j = starthelpx; j <= HelpWidth; j++) {
+                    mvwinsch(helpwin, i - starthelpy, j - starthelpx, help[i][j]|COLOR_PAIR(3));
+        }
+    }
 }
 
 void GUI::delete_menu(WINDOW **items, int count) {
@@ -1490,7 +1598,7 @@ int GUI::scroll_maps(WINDOW **items) {
                     werase(items[1]);
                     int i = 0;
                     int totalPrint = 0;
-                    if (totalPrint < (y - 10)) {
+                    if (totalPrint < (y - 11)) {
                         if (fm->GetFolders().size()>(unsigned) selected) {
                             for (i = 0; totalPrint < (y - 11) && i < (signed)(fm->GetFolders().size() - selected); i++) {
                                 items[i + 2] = subwin(items[1], 1, 30, i + 8, 5);

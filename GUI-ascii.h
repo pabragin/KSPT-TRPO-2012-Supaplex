@@ -34,7 +34,7 @@ private:
     WINDOW *commands_line; //commands line must be input here
     WINDOW *time_line; //time line must be input here
     WINDOW *x_line, *y_line; //x and y must be input here
-    WINDOW *filename_line; //x and y must be input here
+    WINDOW *filename_line; 
     WINDOW *filename;
     int x; //terminal size
     int y;
@@ -55,6 +55,8 @@ private:
     void draw_menubar();
     WINDOW **draw_game_win();
     WINDOW **draw_map_editor();
+    int LoadHelp();
+    char **help;
     void draw_map_edit(char **map, int column, int row, int start_x, int start_y, WINDOW *game_win);
     void TipWindow(string message);
     void about_game_win();
@@ -80,6 +82,8 @@ private:
     int input_Line();
     void start(istream & sin);
     int startx, starty; //начальное положение карты
+    int starthelpx, starthelpy;//start position of help
+    int HelpWidth, HelpHeight;//size of help
     int startpos;//start position for list of maps
     void solve_map(void); //функция запуска решателя
     void RobotCentred(void); //Выставление начальных координат на робота
