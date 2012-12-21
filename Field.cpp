@@ -413,6 +413,7 @@ Field Field::operator = (const Field & field)
 	lambdas = field.lambdas;
 	lift = field.lift;
 	liftIsOpen = field.liftIsOpen;
+	robotIsDead = false;
 
 	map = new _MineObject * [field.mapHeight];
 	for (size_t i = 0; i < field.mapHeight; i++) {

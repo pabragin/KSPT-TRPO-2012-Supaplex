@@ -110,7 +110,8 @@ int GUI::LoadHelp()
 {
         ifstream sin("help");
         if ( ! sin ) {
-            return -1;
+            sin.open("../help");
+            if ( ! sin ) return -1;
         }
 	HelpWidth = -1;
 	HelpHeight = -1;
@@ -129,9 +130,9 @@ int GUI::LoadHelp()
 	HelpHeight = buf.size();
 	sin.seekg(0, ios::beg);
 	help = new char * [HelpHeight];
-	for (size_t i = 0; i < HelpHeight; i++) {
+	for (size_t i = 0; i < (unsigned)HelpHeight; i++) {
 		help[i] = new char [HelpWidth];
-		for (size_t j = 0; j < HelpWidth; j++) {
+		for (size_t j = 0; j < (unsigned)HelpWidth; j++) {
                     if(j<buf[i].length())
 			help[i][j] = buf.at(i)[j];
                     else
@@ -139,6 +140,7 @@ int GUI::LoadHelp()
 		}
 	}
         HelpWidth =HelpWidth-1;
+	sin.close();
 	return 0;
 }
 
@@ -1024,8 +1026,10 @@ void GUI::resize_refresh() {
         } else if (current_window == 2) {
             game_win = subwin(stdscr, y - 5, x - 4, 4, 2); //size of game window
             wbkgd(game_win, COLOR_PAIR(2));
-            LoadHelp();
+            if(LoadHelp()!=-1)
+            {
             help_game_win();
+            }
             touchwin(stdscr);
             refresh();
         } else if (current_window == 3) {
@@ -1268,6 +1272,29 @@ WINDOW **GUI::draw_game_win() {
     waddstr(frames[1], "Moves:");
     wmove(frames[1], 5, 1);
     waddstr(frames[1], "Lambdas:");
+    wmove(frames[1], 7, 1);
+    waddstr(frames[1], "[ ");
+    wattron(frames[1], COLOR_PAIR(2));
+    waddstr(frames[1], "- undo");
+    wattroff(frames[1], COLOR_PAIR(2));
+    wmove(frames[1], 8, 1);
+    wattron(frames[1], COLOR_PAIR(3));
+    waddstr(frames[1], "] ");
+    wattron(frames[1], COLOR_PAIR(2));
+    waddstr(frames[1], "- redo");
+    wattroff(frames[1], COLOR_PAIR(2));
+    wmove(frames[1], 10, 1);
+    wattron(frames[1], COLOR_PAIR(3));
+    waddstr(frames[1], "+ ");
+    wattron(frames[1], COLOR_PAIR(2));
+    waddstr(frames[1], "- speed up");
+    wattroff(frames[1], COLOR_PAIR(2));
+    wmove(frames[1], 11, 1);
+    wattron(frames[1], COLOR_PAIR(3));
+    waddstr(frames[1], "- ");
+    wattron(frames[1], COLOR_PAIR(2));
+    waddstr(frames[1], "- speed down");
+    wattroff(frames[1], COLOR_PAIR(2));
     wmove(frames[2], 1, 1);
     waddstr(frames[2], "Trace:");
     wmove(frames[3], 1, 1);
