@@ -10,7 +10,7 @@
 #define BACKSPACE 330
 
 long SleepTime = 200000;
-pthread_mutex_t mutex, mutex2;
+pthread_mutex_t mutex1, mutex2;
 
 GUI::GUI() {
     int key, selected_from_m, selected_from_h, selected_from_e;
@@ -224,15 +224,15 @@ void *fun(void* b) {
     while (true) {
         int key = getchar();
         if (key == 61) {
-            pthread_mutex_lock(&mutex);
+            pthread_mutex_lock(&mutex1);
             if (SleepTime > 50000)
                 SleepTime -= 50000;
-            pthread_mutex_unlock(&mutex);
+            pthread_mutex_unlock(&mutex1);
         } else if (key == 45) {
-            pthread_mutex_lock(&mutex);
+            pthread_mutex_lock(&mutex1);
             if (SleepTime < 400000)
                 SleepTime += 50000;
-            pthread_mutex_unlock(&mutex);
+            pthread_mutex_unlock(&mutex1);
         } else if (key == 32) {
             pthread_mutex_lock(&mutex2);
             if (block == true)
@@ -250,7 +250,7 @@ void GUI::solve_map(void) {
         if (NewGame(fm->GetFiles()[selectedMap - fm->GetFolders().size()].c_str()) != -1) {
             block = false;
             pthread_t t;
-            pthread_mutex_init(&mutex, NULL);
+            pthread_mutex_init(&mutex1, NULL);
             pthread_mutex_init(&mutex2, NULL);
             RobotCentred();
             game.Solve(1);
@@ -262,15 +262,15 @@ void GUI::solve_map(void) {
                     game.MoveRobot(game.GetTrace()[i]);
                     str += game.GetTrace()[i];
                     resize_refresh();
-                    pthread_mutex_lock(&mutex);
+                    pthread_mutex_lock(&mutex1);
                     usleep(SleepTime);
-                    pthread_mutex_unlock(&mutex);
+                    pthread_mutex_unlock(&mutex1);
                     pthread_mutex_lock(&mutex2);
                     if (block == true)
                         break;
                     pthread_mutex_unlock(&mutex2);
                 }
-            pthread_mutex_destroy(&mutex);
+            pthread_mutex_destroy(&mutex1);
             pthread_mutex_destroy(&mutex2);
             pthread_cancel(t);
             current_window = 1;
@@ -693,15 +693,15 @@ int GUI::input_Line() {
                     for (unsigned int i = 0; i < strC.size(); i++) {
                         if (game.GetResult() == 0) {
                             pthread_t t;
-                            pthread_mutex_init(&mutex, NULL);
+                            pthread_mutex_init(&mutex1, NULL);
                             pthread_create(&t, NULL, fun, NULL);
                             game.MoveRobot(strC[i]);
                             str += strC[i];
                             resize_refresh();
-                            pthread_mutex_lock(&mutex);
+                            pthread_mutex_lock(&mutex1);
                             usleep(SleepTime);
-                            pthread_mutex_unlock(&mutex);
-                            pthread_mutex_destroy(&mutex);
+                            pthread_mutex_unlock(&mutex1);
+                            pthread_mutex_destroy(&mutex1);
                             pthread_cancel(t);
                         }
                     }
