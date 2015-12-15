@@ -1,0 +1,76 @@
+Hi, user! Now you will play a game named Supaplex. 
+First of all you should know some terminology and some goal of the game.
+
+Your purpose is to collect points. As many, as you can. You can do it by taking 
+treasures - lambdas ('\' on the map)!
+
+On your way you will find a lot of obstacles like Rocks(*) and Walls(#). 
+Beware! You can be crushed by the Rocks (*)! Some their combinations can be very deadly 
+for you. 
+_________________________________________________________________________________________
+
+Common rules.
+
+The rules are simple:
+1 move   = -1 score;
+1 lambda = +25 scores;
+
+And if you are smart enough to collect all lambdas, then try to go out through lift.
+If you could, you get additional 50 points for each lambda collected. Otherwise, you can 
+teleport from mine (command q) and get additional 25 points for each lambda collected.
+
+You can use teleport (command q) to avoid death also. Or wait (command e) until danger 
+will disappear, but waiting wastes 1 score.
+
+Now you know some basics, good luck my friend!
+_________________________________________________________________________________________
+
+Starting new game.
+
+You can start the game using "Menu" (F1) -> "New game" (ctrl-N) and selecting a map.
+Navigate with "up" and "down" buttons, choose map with "Enter". After game was started 
+use commands from command list.
+_________________________________________________________________________________________
+
+Command list.
+
+w - move up
+a - move left
+s - move down
+d - move right
+q - use teleport (abort)
+e - wait
+_________________________________________________________________________________________
+
+Automatic solving.
+
+To hard for you? Trust the robot (R) - he knows all better then you...
+Just use "ctrl-o" for automatic solve. 
+Use "ctrl-n" for the new game and "ctrl-r" to reset the game. Use "ctrl-e" for exit.
+Love actions? We have a surprise for you! You can set the speed of the robot using "+"
+and "-" buttons (use at any time). And rewinding! Repeat the best moments using 
+"[" (forward) and "]"(back) buttons. 
+_________________________________________________________________________________________
+
+Map editor.
+
+You can create your own map, your own adventure with "F3" button.
+Use "ctrl-d" to load existing map, "ctrl-v" to save map and "ctrl-w" to create new map.
+
+Inside map editor choose object by using "1-7" buttons:
+
+1 - "R" - robot
+2 - "*" - rock
+3 - "#" - wall
+4 - "." - earth
+5 - "\" - lambda
+6 - "L" - opened lift
+7 - "O" - closed lift
+
+Put this objects on the map by using "enter". For navigation use "arrow" buttons 
+(scrolling) + "W" "A" "S" "D"(move the cursor).
+Remember, there can be only 1 robot and 1 lift on the map and mine should be surrounded 
+by walls.
+_________________________________________________________________________________________
+
+Read information about game using "F2" -> "ctrl-a".

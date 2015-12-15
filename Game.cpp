@@ -35,6 +35,11 @@ Field *Game::GetField(void)
 	return &this->mine;
 }
 
+void Game::SetField(Field field)
+{
+	mine = field;
+}
+
 int Game::GetScore(void)
 {
 	return this->score;
